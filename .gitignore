@@ -1,0 +1,12 @@
+node_modules/
+.env
+uploads/*
+!uploads/.gitkeep
+output/*
+!output/.gitkeep
+database/*.sqlite
+database/*.db
+.DS_Store
+dist/
+build/
+*.log

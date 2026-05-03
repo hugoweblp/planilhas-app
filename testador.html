@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Testador de API PDDE</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🚀 Testador de API (Raio-X do Servidor)</h2>
+        <p>Selecione um arquivo XML para ver o que o servidor extrai e calcula:</p>
+        <input type="file" id="xmlFile" accept=".xml">
+        <br><br>
+        <button onclick="enviarXML()">Enviar para o Servidor</button>
+        
+        <h3>Resposta do Servidor:</h3>
+        <div id="status">Aguardando...</div>
+        <pre id="resultado">JSON aparecerá aqui...</pre>
+    </div>
+
+    <script>
+        async function enviarXML() {
+            const fileInput = document.getElementById('xmlFile');
+            const status = document.getElementById('status');
+            const resultado = document.getElementById('resultado');
+
+            if (fileInput.files.length === 0) {
+                alert('Selecione um arquivo primeiro!');
+                return;
+            }
+
+            status.innerText = 'Enviando...';
+            const formData = new FormData();
+            formData.append('xmls', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                status.innerText = '✅ Recebido com sucesso!';
+                resultado.innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                status.innerText = '❌ Erro ao conectar ao servidor.';
+                resultado.innerText = error.message;
+            }
+        }
+    </script>
+</body>
+</html>
