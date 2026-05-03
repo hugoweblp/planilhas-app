@@ -2,13 +2,13 @@
   "name": "gerador-planilhas-pdde",
   "version": "1.0.0",
   "description": "Gerador automatico de planilhas PDDE a partir de XML NF-e",
-  "main": "server.js",
+  "main": "index.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "node index.js",
+    "dev": "node index.js",
     "testar:xml": "node src/modules/testar_xml.js",
     "testar:excel": "node src/modules/testar_excel.js"
   },
