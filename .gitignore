@@ -6,6 +6,8 @@ output/*
 !output/.gitkeep
 database/*.sqlite
 database/*.db
+data/*.sqlite
+data/*.db
 .DS_Store
 dist/
 build/
