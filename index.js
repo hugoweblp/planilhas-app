@@ -137,7 +137,10 @@ app.use('/output', express.static(path.join(__dirname, 'output')));
 app.get('/api/output-files', (req, res) => {
   try {
     const outputDir = path.join(__dirname, 'output');
-    if (!fs.existsSync(outputDir)) return res.json({ success: true, files: [] });
+    if (!fs.existsSync(outputDir)) {
+        console.log('📁 Criando pasta de saída:', outputDir);
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
     const files = fs.readdirSync(outputDir)
       .filter(f => f.toLowerCase().endsWith('.xlsx'))
       .map(f => {
@@ -180,8 +183,11 @@ app.get('/testador', (req, res) => {
 // Configuração do Multer para Uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'uploads';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    const dir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(dir)) {
+        console.log('📁 Criando pasta de uploads:', dir);
+        fs.mkdirSync(dir, { recursive: true });
+    }
     cb(null, dir);
   },
   filename: (req, file, cb) => {
@@ -238,7 +244,11 @@ app.post('/api/upload', autenticarToken, upload.array('xmls'), async (req, res) 
     });
   } catch (error) {
     console.error('❌ ERRO NO PROCESSAMENTO DO XML:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
   }
 });
 
