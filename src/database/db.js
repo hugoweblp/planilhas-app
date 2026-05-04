@@ -1,31 +1,31 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-const fs = require('fs');
+const mysql = require('mysql2/promise');
+const dotenv = require('dotenv');
 
-const DB_PATH = path.join(__dirname, '../../data/banco_de_dados.sqlite');
-
-// Garante que a pasta data existe
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
-
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) {
-        console.error('❌ Erro ao conectar ao SQLite:', err.message);
-    } else {
-        console.log('✅ Conectado ao banco de dados SQLite Local.');
-    }
-});
+dotenv.config();
 
 /**
- * Inicializa as tabelas do sistema (A Memória do Robô)
+ * CONFIGURAÇÃO DO BANCO DE DADOS MYSQL (HOSTINGER)
  */
-function inicializarBanco() {
-    db.serialize(() => {
-        // 1. Tabela de Escolas (Cadastro Único)
-        db.run(`CREATE TABLE IF NOT EXISTS escolas (
-            cnpj TEXT PRIMARY KEY,
+const db = mysql.createPool({
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD || process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+console.log('✅ Conectado ao pool de conexões MySQL da Hostinger.');
+
+/**
+ * Inicializa as tabelas do sistema na nuvem
+ */
+async function inicializarBanco() {
+    const queries = [
+        // 1. Tabela de Escolas
+        `CREATE TABLE IF NOT EXISTS escolas (
+            cnpj VARCHAR(20) PRIMARY KEY,
             razao_social TEXT,
             nome_fantasia TEXT,
             logradouro TEXT,
@@ -35,97 +35,89 @@ function inicializarBanco() {
             uf TEXT,
             cep TEXT,
             criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+        )`,
 
-        // 2. Tabela de Notas (Registro de Processamento)
-        db.run(`CREATE TABLE IF NOT EXISTS notas (
-            chave TEXT PRIMARY KEY,
+        // 2. Tabela de Notas
+        `CREATE TABLE IF NOT EXISTS notas (
+            chave VARCHAR(60) PRIMARY KEY,
             numero TEXT,
             serie TEXT,
             data_emissao TEXT,
-            valor_total REAL,
+            valor_total DOUBLE,
             cnpj_vendedor TEXT,
-            cnpj_escola TEXT,
-            status TEXT DEFAULT 'PENDENTE', -- PENDENTE, ASSINADO
+            cnpj_escola VARCHAR(20),
+            status VARCHAR(20) DEFAULT 'PENDENTE',
             arquivo_excel TEXT,
             arquivo_word TEXT,
-            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(cnpj_escola) REFERENCES escolas(cnpj)
-        )`);
+            signature_token TEXT,
+            recebedor_nome TEXT,
+            recebedor_cpf TEXT,
+            recebedor_whatsapp TEXT,
+            assinatura_path TEXT,
+            criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
 
-        // Migração: Garante que as colunas novas existam em bancos antigos
-        const colunasNovas = [
-            { nome: 'arquivo_excel', tipo: 'TEXT' },
-            { nome: 'arquivo_word', tipo: 'TEXT' },
-            { nome: 'signature_token', tipo: 'TEXT' },
-            { nome: 'recebedor_nome', tipo: 'TEXT' },
-            { nome: 'recebedor_cpf', tipo: 'TEXT' },
-            { nome: 'recebedor_whatsapp', tipo: 'TEXT' },
-            { nome: 'assinatura_path', tipo: 'TEXT' }
-        ];
-
-        colunasNovas.forEach(col => {
-            db.run(`ALTER TABLE notas ADD COLUMN ${col.nome} ${col.tipo}`, (err) => {
-                // Se der erro é porque a coluna já existe, tudo certo!
-            });
-        });
-
-        // 3. Tabela de Entregas (O Protocolo Digital com Selfie e Assinatura)
-        db.run(`CREATE TABLE IF NOT EXISTS entregas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            chave_nota TEXT,
+        // 3. Tabela de Entregas
+        `CREATE TABLE IF NOT EXISTS entregas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            chave_nota VARCHAR(60),
             data_entrega TEXT,
             recebido_por TEXT,
             selfie_path TEXT,
             signature_path TEXT,
-            observacao TEXT,
-            FOREIGN KEY(chave_nota) REFERENCES notas(chave)
-        )`);
-        // 4. Tabela de Usuários (Segurança & SaaS)
-        db.run(`CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario TEXT UNIQUE,
+            observacao TEXT
+        )`,
+
+        // 4. Tabela de Usuários
+        `CREATE TABLE IF NOT EXISTS usuarios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario VARCHAR(50) UNIQUE,
             senha TEXT,
             nome TEXT,
-            nivel TEXT DEFAULT 'operador', -- admin, operador
+            nivel VARCHAR(20) DEFAULT 'operador',
             criado_em DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`, () => {
-            // Cria usuário admin padrão se não existir nenhum
-            db.get('SELECT count(*) as count FROM usuarios', (err, row) => {
-                if (!err && row && row.count === 0) {
-                    const { registrarUsuario } = require('../services/authService');
-                    registrarUsuario('admin', 'admin123', 'Administrador', 'admin')
-                        .then(() => console.log('👤 Usuário Admin padrão criado: admin / admin123'))
-                        .catch(e => console.error('❌ Erro ao criar admin padrão:', e.message));
-                }
-            });
-        });
-        
-        console.log('🏛️  Estrutura do Banco de Dados pronta para uso.');
-    });
+        )`
+    ];
+
+    try {
+        for (let sql of queries) {
+            await db.execute(sql);
+        }
+
+        // Verifica se precisa criar admin padrão
+        const [rows] = await db.execute('SELECT count(*) as count FROM usuarios');
+        if (rows[0].count === 0) {
+            const { registrarUsuario } = require('../services/authService');
+            await registrarUsuario('admin', 'admin123', 'Administrador', 'admin');
+            console.log('👤 Usuário Admin padrão criado no MySQL: admin / admin123');
+        }
+
+        console.log('🏛️  Estrutura do MySQL pronta para uso.');
+    } catch (error) {
+        console.error('❌ Erro na inicialização do MySQL:', error.message);
+    }
 }
 
-// Helpers para usar o banco com Async/Await (mais moderno)
-const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-        if (err) reject(err);
-        else resolve(this);
-    });
-});
+// Helpers unificados para usar o banco com Async/Await
+async function dbRun(sql, params = []) {
+    // Tradução básica de sintaxe SQLite para MySQL
+    let mysqlSql = sql.replace('INSERT OR REPLACE', 'REPLACE')
+                      .replace('OR IGNORE', '')
+                      .replace('AUTOINCREMENT', 'AUTO_INCREMENT');
+                      
+    const [result] = await db.execute(mysqlSql, params);
+    return { changes: result.affectedRows, lastID: result.insertId };
+}
 
-const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-    });
-});
+async function dbGet(sql, params = []) {
+    const [rows] = await db.execute(sql, params);
+    return rows[0];
+}
 
-const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-    });
-});
+async function dbAll(sql, params = []) {
+    const [rows] = await db.execute(sql, params);
+    return rows;
+}
 
 module.exports = {
     db,
