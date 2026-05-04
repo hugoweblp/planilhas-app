@@ -92,7 +92,7 @@ app.post('/api/schools', autenticarToken, async (req, res) => {
         const cleanCnpj = String(cnpj).replace(/\D/g, '').padStart(14, '0');
         
         await dbRun(
-            'INSERT OR REPLACE INTO escolas (cnpj, razao_social, logradouro, municipio, uf) VALUES (?, ?, ?, ?, ?)',
+            'REPLACE INTO escolas (cnpj, razao_social, logradouro, municipio, uf) VALUES (?, ?, ?, ?, ?)',
             [cleanCnpj, razao_social, logradouro, municipio, uf]
         );
         
@@ -253,13 +253,10 @@ app.post('/api/generate', async (req, res) => {
     const resultadoExcel = await gerarExcel(dadosParaGerar);
     const resultadoWord = await gerarReciboWord(dadosParaGerar);
 
-    // Salva ou atualiza o registro da nota no banco com os arquivos e status
-    await dbRun(`INSERT INTO notas 
+    // Salva ou atualiza o registro da nota no banco
+    await dbRun(`REPLACE INTO notas 
         (chave, numero, serie, data_emissao, valor_total, cnpj_vendedor, cnpj_escola, status, arquivo_excel, arquivo_word) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(chave) DO UPDATE SET 
-        arquivo_excel = excluded.arquivo_excel,
-        arquivo_word = excluded.arquivo_word`, 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
         [
           dadosParaGerar.nota.chave, 
           dadosParaGerar.nota.numero, 
