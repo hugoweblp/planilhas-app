@@ -228,9 +228,9 @@ app.post('/api/upload', autenticarToken, upload.array('xmls'), async (req, res) 
         [
           cnpjEscola, 
           notaPrincipal.comprador.nome, 
-          notaPrincipal.comprador.endereco, 
-          notaPrincipal.comprador.cidade, 
-          notaPrincipal.comprador.estado
+          notaPrincipal.comprador.logradouro, 
+          notaPrincipal.comprador.municipio, 
+          notaPrincipal.comprador.uf
         ]
       );
       schoolCreated = true;
