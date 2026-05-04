@@ -105,7 +105,8 @@ async function dbRun(sql, params = []) {
                       .replace('OR IGNORE', '')
                       .replace('AUTOINCREMENT', 'AUTO_INCREMENT');
                       
-    const [result] = await db.execute(mysqlSql, params);
+    const paramsWithNulls = params.map(p => p === undefined ? null : p);
+    const [result] = await db.execute(mysqlSql, paramsWithNulls);
     return { changes: result.affectedRows, lastID: result.insertId };
 }
 
