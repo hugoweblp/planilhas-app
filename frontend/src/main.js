@@ -470,7 +470,8 @@ async function handleFiles(files) {
         }
     } catch (error) { 
         console.error('Erro no upload:', error);
-        alert('Erro ao processar XML. Verifique sua conexão ou login.');
+        const serverMessage = error.response?.data?.error || 'Erro desconhecido no servidor.';
+        alert(`Erro ao processar XML:\n${serverMessage}`);
     }
 }
 
@@ -890,7 +891,7 @@ window.enviarSolicitacaoAssinatura = async () => {
 
     try {
         const btn = document.getElementById('btn-send-sig');
-        btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> ENVIANDO...';
+        btn.innerText = 'Enviando...';
         btn.disabled = true;
 
         const token = localStorage.getItem('token');
@@ -900,34 +901,25 @@ window.enviarSolicitacaoAssinatura = async () => {
 
         if (response.data.success) {
             const link = response.data.link;
+            console.log('🔗 LINK DE ASSINATURA GERADO:', link);
             
-            // --- NOVA LÓGICA: Automação WhatsApp ---
-            const whatsappLimpo = data.recebedor_whatsapp.replace(/\D/g, '');
-            const mensagem = encodeURIComponent(`Olá ${data.recebedor_nome}, aqui está o link para você realizar a assinatura digital do seu documento no sistema PDDE Control:\n\n${link}\n\nPor favor, acesse o link para assinar.`);
-            const waUrl = `https://wa.me/55${whatsappLimpo}?text=${mensagem}`;
-            
-            // Abre o WhatsApp em uma nova aba
-            window.open(waUrl, '_blank');
-
-            // Feedback visual no modal (pode esconder a área do link antigo se quiser)
-            const linkArea = document.getElementById('link-display-area');
-            if (linkArea) {
-                linkArea.style.display = 'block';
-                document.getElementById('generated-link-input').value = link;
-            }
+            // Exibe a área do link no modal
+            document.getElementById('link-display-area').style.display = 'block';
+            document.getElementById('generated-link-input').value = link;
 
             // Atualiza o botão para estado de espera
             btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> AGUARDANDO ASSINATURA...';
             btn.style.background = 'linear-gradient(135deg, #440000, #220000)';
             
-            // Inicia o Polling para detectar quando ele assinar
+            // Inicia o Polling
             iniciarPollingAssinatura(id);
             
+            // Re-renderiza ícones do Lucide
             if (window.lucide) window.lucide.createIcons();
         }
     } catch (error) {
         console.error('Erro ao enviar solicitação:', error);
-        alert('Erro ao processar link de assinatura.');
+        alert('Erro ao enviar link de assinatura.');
         const btn = document.getElementById('btn-send-sig');
         btn.innerText = 'Enviar Link de Assinatura';
         btn.disabled = false;
