@@ -17,7 +17,7 @@ async function registrarUsuario(usuario, senha, nome, nivel = 'operador') {
         );
         return { success: true, message: 'Usuário registrado com sucesso.' };
     } catch (error) {
-        if (error.message.includes('UNIQUE')) {
+        if (error.message.includes('UNIQUE') || error.message.includes('ER_DUP_ENTRY')) {
             throw new Error('Este nome de usuário já está sendo usado.');
         }
         throw error;
