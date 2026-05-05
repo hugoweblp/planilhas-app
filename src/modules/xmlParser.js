@@ -56,9 +56,29 @@ function parseNFe(caminhoXML) {
   // 2. Faz o parse
   const parsed = parser.parse(xmlContent);
 
-  // 3. Navega até o coração da NF-e
-  const nfeProc = parsed.nfeProc;
-  const infNFe = nfeProc.NFe.infNFe;
+  // 3. Navega até o coração da NF-e (Suporta nfeProc ou NFe direto)
+  let infNFe;
+  try {
+      if (parsed.nfeProc && parsed.nfeProc.NFe) {
+          infNFe = parsed.nfeProc.NFe.infNFe;
+      } else if (parsed.NFe) {
+          infNFe = parsed.NFe.infNFe;
+      } else if (parsed.infNFe) {
+          infNFe = parsed.infNFe;
+      } else {
+          // Busca recursiva básica se não achar nos lugares óbvios
+          const rootKey = Object.keys(parsed)[0];
+          if (parsed[rootKey] && parsed[rootKey].infNFe) {
+              infNFe = parsed[rootKey].infNFe;
+          } else {
+              throw new Error('Estrutura de NF-e não reconhecida no XML.');
+          }
+      }
+  } catch (e) {
+      throw new Error('Não foi possível localizar os dados da nota (infNFe) no XML.');
+  }
+
+  if (!infNFe) throw new Error('Dados da nota (infNFe) estão ausentes no XML.');
 
   // ── DADOS DA NOTA ──────────────────────────────────────────────
   const ide = infNFe.ide;
@@ -73,39 +93,39 @@ function parseNFe(caminhoXML) {
   };
 
   // ── DADOS DO VENDEDOR (nossa empresa) ──────────────────────────
-  const emit = infNFe.emit;
-  const endEmit = emit.enderEmit;
+  const emit = infNFe.emit || {};
+  const endEmit = emit.enderEmit || {};
   const vendedor = {
-    cnpj:         String(emit.CNPJ).replace(/\D/g, '').padStart(14, '0'),
-    cnpjFmt:      formatarCNPJ(emit.CNPJ),
-    nome:         emit.xNome,
-    ie:           String(emit.IE),
-    logradouro:   endEmit.xLgr,
-    numero:       String(endEmit.nro),
+    cnpj:         String(emit.CNPJ || emit.CPF || '').replace(/\D/g, '').padStart(14, '0'),
+    cnpjFmt:      formatarCNPJ(emit.CNPJ || emit.CPF || ''),
+    nome:         emit.xNome || 'Vendedor não identificado',
+    ie:           String(emit.IE || ''),
+    logradouro:   endEmit.xLgr || '',
+    numero:       endEmit.nro || '',
     complemento:  endEmit.xCpl || '',
-    bairro:       endEmit.xBairro,
-    municipio:    endEmit.xMun,
-    uf:           endEmit.UF,
-    cep:          String(endEmit.CEP).padStart(8, '0'),
+    bairro:       endEmit.xBairro || '',
+    municipio:    endEmit.xMun || '',
+    uf:           endEmit.UF || '',
+    cep:          String(endEmit.CEP || '').padStart(8, '0'),
     telefone:     String(emit.fone || ''),
-    enderecoCompleto: `${endEmit.xLgr}, ${endEmit.nro}${endEmit.xCpl ? ' - ' + endEmit.xCpl : ''}, ${endEmit.xBairro} - ${endEmit.xMun}/${endEmit.UF}`,
+    enderecoCompleto: `${endEmit.xLgr || ''}, ${endEmit.nro || ''}${endEmit.xCpl ? ' - ' + endEmit.xCpl : ''}, ${endEmit.xBairro || ''} - ${endEmit.xMun || ''}/${endEmit.UF || ''}`,
   };
 
   // ── DADOS DO COMPRADOR (escola) ────────────────────────────────
-  const dest = infNFe.dest;
-  const endDest = dest.enderDest;
+  const dest = infNFe.dest || {};
+  const endDest = dest.enderDest || {};
   const comprador = {
-    cnpj:         String(dest.CNPJ),
-    cnpjFmt:      formatarCNPJ(dest.CNPJ),
-    nome:         dest.xNome,
-    logradouro:   endDest.xLgr,
-    numero:       String(endDest.nro),
+    cnpj:         String(dest.CNPJ || dest.CPF || '').replace(/\D/g, '').padStart(14, '0'),
+    cnpjFmt:      formatarCNPJ(dest.CNPJ || dest.CPF || ''),
+    nome:         dest.xNome || 'Comprador não identificado',
+    logradouro:   endDest.xLgr || '',
+    numero:       endDest.nro || '',
     complemento:  endDest.xCpl || '',
-    bairro:       endDest.xBairro,
-    municipio:    endDest.xMun,
-    uf:           endDest.UF,
-    cep:          String(endDest.CEP).padStart(8, '0'),
-    enderecoCompleto: `${endDest.xLgr}${endDest.xCpl ? ', ' + endDest.xCpl : ''} - ${endDest.xBairro} - ${endDest.xMun}/${endDest.UF} - CEP: ${String(endDest.CEP).padStart(8, '0')}`,
+    bairro:       endDest.xBairro || '',
+    municipio:    endDest.xMun || '',
+    uf:           endDest.UF || '',
+    cep:          String(endDest.CEP || '').padStart(8, '0'),
+    enderecoCompleto: `${endDest.xLgr || ''}${endDest.xCpl ? ', ' + endDest.xCpl : ''} - ${endDest.xBairro || ''} - ${endDest.xMun || ''}/${endDest.UF || ''} - CEP: ${String(endDest.CEP || '').padStart(8, '0')}`,
   };
 
   // ── PRODUTOS ────────────────────────────────────────────────────
