@@ -210,44 +210,45 @@ app.post('/api/upload', autenticarToken, upload.array('xmls'), async (req, res) 
       return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado.' });
     }
 
+    // Processa todos os arquivos em paralelo
     const promessas = arquivos.map(file => prepararPreviewNota(file.path));
     const notasProcessadas = await Promise.all(promessas);
     
-    // Pega a primeira nota para validar a escola
-    const notaPrincipal = notasProcessadas[0];
-    const cnpjEscola = String(notaPrincipal.comprador.cnpj).replace(/\D/g, '').padStart(14, '0');
+    let escolasNovas = 0;
 
-    // Verifica se a escola existe
-    const schoolInDb = await dbAll('SELECT * FROM escolas WHERE cnpj = ?', [cnpjEscola]);
+    // Garante que cada escola de cada nota seja cadastrada
+    for (const nota of notasProcessadas) {
+        const cnpjEscola = String(nota.comprador.cnpj).replace(/\D/g, '').padStart(14, '0');
+        
+        // Verifica se a escola existe
+        const schoolInDb = await dbAll('SELECT cnpj FROM escolas WHERE cnpj = ?', [cnpjEscola]);
 
-    let schoolCreated = false;
-    if (schoolInDb.length === 0) {
-      // AUTO-CADASTRO: Salva a escola automaticamente
-      await dbRun(
-        'INSERT INTO escolas (cnpj, razao_social, logradouro, municipio, uf) VALUES (?, ?, ?, ?, ?)',
-        [
-          cnpjEscola, 
-          notaPrincipal.comprador.nome, 
-          notaPrincipal.comprador.logradouro, 
-          notaPrincipal.comprador.municipio, 
-          notaPrincipal.comprador.uf
-        ]
-      );
-      schoolCreated = true;
+        if (schoolInDb.length === 0) {
+            await dbRun(
+                'INSERT IGNORE INTO escolas (cnpj, razao_social, logradouro, municipio, uf) VALUES (?, ?, ?, ?, ?)',
+                [
+                    cnpjEscola, 
+                    nota.comprador.nome, 
+                    nota.comprador.logradouro, 
+                    nota.comprador.municipio, 
+                    nota.comprador.uf
+                ]
+            );
+            escolasNovas++;
+        }
     }
 
     res.json({ 
       success: true, 
-      schoolCreated,
-      schoolName: notaPrincipal.comprador.nome,
+      count: notasProcessadas.length,
+      escolasNovas,
       notas: notasProcessadas 
     });
   } catch (error) {
     console.error('❌ ERRO NO PROCESSAMENTO DO XML:', error);
     res.status(500).json({ 
       success: false, 
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+      error: error.message
     });
   }
 });
