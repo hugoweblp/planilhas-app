@@ -1297,7 +1297,14 @@
                 </div>
             </div>
             
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+              <!-- Navegação do Carrossel -->
+              <div id="carousel-controls" style="display: none; align-items: center; gap: 15px; margin-right: 20px; padding-right: 20px; border-right: 1px solid var(--border);">
+                  <button class="btn-secondary" id="btn-prev-note" style="padding: 10px;"><i data-lucide="chevron-left"></i></button>
+                  <span id="carousel-info" style="font-size: 14px; font-weight: 600; color: var(--text-dim); min-width: 80px; text-align: center;">1 de 1</span>
+                  <button class="btn-secondary" id="btn-next-note" style="padding: 10px;"><i data-lucide="chevron-right"></i></button>
+              </div>
+
               <button class="btn-secondary" id="btn-cancel">Cancelar</button>
               <button class="btn-primary" id="btn-finalize">
                 <i data-lucide="check-circle"></i> Finalizar e Gerar Kit
