@@ -1,6 +1,8 @@
 const API_URL = '/api'; // Usa o caminho relativo do servidor
 
 let notaAtual = null; // Memória da nota em edição
+let loteAtual = []; // Notas do upload atual (Carrossel)
+let indexLote = 0;   // Posição no lote
 let historicoCompleto = []; // Cache do histórico para filtros rápidos
 let chartVolume = null;
 let chartStatus = null;
@@ -451,21 +453,18 @@ async function handleFiles(files) {
         });
 
         if (response.data.success) {
-            // Se foi uma escola nova, avisa rapidamente
-            if (response.data.schoolCreated) {
-                alert(`✓ Escola Nova Identificada e Cadastrada:\n${response.data.schoolName}`);
+            // Inicializa o Carrossel
+            loteAtual = response.data.notas;
+            indexLote = 0;
+
+            if (loteAtual.length > 1) {
+                document.getElementById('carousel-controls').style.display = 'flex';
+            } else {
+                document.getElementById('carousel-controls').style.display = 'none';
             }
 
-            // Prosegue direto para edição (Fluxo Contínuo)
-            if (response.data.notas.length > 0) {
-                const nota = response.data.notas[0];
-                
-                if (nota.isDuplicada) {
-                    const msg = `⚠️ NOTA DUPLICADA\n\nA NF nº ${nota.nota.numero} já existe no histórico.\n\nDeseja abrir para edição e gerar novos arquivos mesmo assim?`;
-                    if (!confirm(msg)) return;
-                }
-
-                abrirModalEdicao(nota);
+            if (loteAtual.length > 0) {
+                abrirModalEdicao(loteAtual[0]);
             }
         }
     } catch (error) { 
@@ -586,6 +585,15 @@ function configurarModal() {
     if (btnClose) btnClose.onclick = () => editModal.classList.remove('active');
     if (btnCancel) btnCancel.onclick = () => editModal.classList.remove('active');
     
+    if (btnFinalize) btnFinalize.onclick = finalizarEdicao;
+
+    // Configura botões do Carrossel
+    const btnPrev = document.getElementById('btn-prev-note');
+    const btnNext = document.getElementById('btn-next-note');
+    
+    if (btnPrev) btnPrev.onclick = () => navegarLote(-1);
+    if (btnNext) btnNext.onclick = () => navegarLote(1);
+
     // Lógica das Setinhas
     const setupGlobalInput = (id, base) => {
         const input = document.getElementById(id);
@@ -639,8 +647,31 @@ function configurarModal() {
     }
 }
 
+function navegarLote(direcao) {
+    const novoIndex = indexLote + direcao;
+    if (novoIndex >= 0 && novoIndex < loteAtual.length) {
+        indexLote = novoIndex;
+        abrirModalEdicao(loteAtual[indexLote]);
+    }
+}
+
 function abrirModalEdicao(nota) {
     notaAtual = nota;
+    const modal = document.getElementById('edit-modal');
+    if (!modal) return;
+
+    // Atualiza info do Carrossel
+    const carouselInfo = document.getElementById('carousel-info');
+    if (carouselInfo) {
+        carouselInfo.innerText = `${indexLote + 1} de ${loteAtual.length}`;
+    }
+
+    // Trava botões de navegação se necessário
+    const btnPrev = document.getElementById('btn-prev-note');
+    const btnNext = document.getElementById('btn-next-note');
+    if (btnPrev) btnPrev.disabled = indexLote === 0;
+    if (btnNext) btnNext.disabled = indexLote === loteAtual.length - 1;
+
     document.getElementById('modal-title').innerText = `Editando Nota: ${nota.nota.numero}`;
     document.getElementById('modal-total').innerText = nota.nota.valorTotalFmt;
     
