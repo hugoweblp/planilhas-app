@@ -1,0 +1,30 @@
+{
+  "name": "gerador-planilhas-pdde",
+  "version": "1.0.0",
+  "description": "Gerador automatico de planilhas PDDE a partir de XML NF-e",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "testar:xml": "node src/modules/testar_xml.js",
+    "testar:excel": "node src/modules/testar_excel.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "adm-zip": "^0.5.10",
+    "axios": "^1.15.2",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "docxtemplater": "^3.68.6",
+    "dotenv": "^16.6.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.22.1",
+    "extenso": "^2.1.0",
+    "fast-xml-parser": "^4.3.4",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "mysql2": "^3.11.0",
+    "pizzip": "^3.2.0"
+  }
+}

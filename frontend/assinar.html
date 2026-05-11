@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Assinatura Digital - PDDE Control Premium</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --bg: #030000;
+            --card: #0a0000;
+            --text: #ffffff;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 0, 0, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .info-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-item:last-child { margin-bottom: 0; }
+
+        .info-item label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .info-item span {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .signature-area {
+            background: #fff; /* Fundo branco para a assinatura ficar limpa no documento */
+            border-radius: 20px;
+            width: 100%;
+            height: 300px;
+            position: relative;
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+            touch-action: none;
+            overflow: hidden;
+        }
+
+        #signature-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+        }
+
+        .btn {
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-clear {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-sign {
+            background: linear-gradient(135deg, #ff0000, #880000);
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .success-overlay i {
+            font-size: 80px;
+            color: #00ff88;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4));
+        }
+
+        .success-overlay h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        /* Instrução de girar celular */
+        .landscape-tip {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        @media (max-height: 450px) {
+            .landscape-tip { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="landscape-tip">
+        <i class="lucide-rotate-cw" style="font-size: 48px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2>Por favor, use o celular em pé</h2>
+        <p>A área de assinatura foi otimizada para o modo retrato.</p>
+    </div>
+
+    <div class="container" id="sign-view">
+        <div class="header">
+            <h1>Assinar Documento</h1>
+            <p>PDDE Control - Protocolo Digital de Recebimento</p>
+        </div>
+
+        <div class="info-card">
+            <div class="info-item">
+                <label>Escola / Unidade</label>
+                <span id="school-name">Carregando...</span>
+            </div>
+            <div class="info-item">
+                <label>Número da Nota Fiscal</label>
+                <span id="invoice-number">...</span>
+            </div>
+            <div class="info-item">
+                <label>Recebedor Autorizado</label>
+                <span id="receiver-name">...</span>
+            </div>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-align: left;">Assine dentro do quadro abaixo:</p>
+        <div class="signature-area">
+            <canvas id="signature-canvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-clear" id="clear-btn">Limpar</button>
+            <button class="btn btn-sign" id="save-btn">Confirmar Assinatura</button>
+        </div>
+
+        <p style="margin-top: 30px; font-size: 0.7rem; color: var(--text-dim);" id="confirmation-text">
+            Ao clicar em confirmar, você declara ter recebido os materiais/serviços constantes na nota fiscal citada acima.
+        </p>
+    </div>
+
+    <div class="success-overlay" id="success-overlay">
+        <i class="lucide-check-circle"></i>
+        <h2>Documento Assinado!</h2>
+        <p>A rubrica foi vinculada com sucesso ao kit PDDE. Você já pode fechar esta aba.</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+        const canvas = document.getElementById('signature-canvas');
+        const signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+
+        // Ajusta o tamanho do canvas para o container
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad.clear();
+        }
+
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        // Carrega dados da nota via token na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        async function loadNoteInfo() {
+            if (!token) {
+                alert('Token de assinatura inválido ou expirado.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/signature-info/${token}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const notas = data.notas;
+                    document.getElementById('school-name').innerText = data.escola;
+                    document.getElementById('receiver-name').innerText = notas[0].recebedor_nome;
+                    
+                    if (notas.length === 1) {
+                        document.getElementById('invoice-number').innerText = `NF ${notas[0].numero}`;
+                        document.getElementById('confirmation-text').innerText = `Confirmo que estou recebendo os materiais/serviços constantes na Nota Fiscal Nº ${notas[0].numero}.`;
+                    } else {
+                        const numeros = notas.map(n => n.numero).join(', ');
+                        document.getElementById('invoice-number').innerText = `Múltiplas Notas (${notas.length})`;
+                        document.getElementById('confirmation-text').innerText = `Confirmo que estou recebendo os materiais/serviços constantes nas Notas Fiscais: ${numeros}.`;
+                    }
+                } else {
+                    alert(data.error || 'Erro ao carregar dados da nota.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro na conexão com o servidor.');
+            }
+        }
+
+        loadNoteInfo();
+
+        // Ações dos botões
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            signaturePad.clear();
+        });
+
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            if (signaturePad.isEmpty()) {
+                alert('Por favor, faça sua assinatura antes de confirmar.');
+                return;
+            }
+
+            const btn = document.getElementById('save-btn');
+            btn.innerText = 'Processando...';
+            btn.disabled = true;
+
+            const signatureData = signaturePad.toDataURL('image/png');
+
+            try {
+                const response = await fetch('/api/save-signature', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: token,
+                        signature: signatureData
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('sign-view').style.display = 'none';
+                    document.getElementById('success-overlay').style.display = 'flex';
+                } else {
+                    alert(data.error || 'Erro ao salvar assinatura.');
+                    btn.innerText = 'Confirmar Assinatura';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert('Erro ao enviar assinatura.');
+                btn.innerText = 'Confirmar Assinatura';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
