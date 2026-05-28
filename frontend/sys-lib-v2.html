@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sala Central — Kitfy SaaS</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/theme.css">
+    <script src="https://unpkg.com/lucide@0.321.0"></script>
+    <script src="assets/utils.js"></script>
+
+    <style>
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 40px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--success);
+            letter-spacing: 2px;
+        }
+
+        .header-brand span { color: var(--dim); }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .admin-badge {
+            background: var(--primary-dim);
+            border: 1px solid var(--primary-border);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .btn-header {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-header:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        /* ── MAIN ── */
+        .main { padding: 40px; max-width: 1400px; margin: 0 auto; }
+
+        /* ── STATS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: 0.2s;
+        }
+
+        .stat-card:hover { border-color: rgba(255,255,255,0.12); }
+
+        .stat-card.warning { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+        .stat-card.success { border-color: rgba(16,185,129,0.2); }
+
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dim);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .stat-card.warning .stat-value { color: var(--warning); }
+        .stat-card.success .stat-value { color: var(--success); }
+
+        .stat-sub {
+            font-size: 0.7rem;
+            color: var(--dim);
+            margin-top: 6px;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.08;
+            color: #fff;
+        }
+
+        /* ── TOOLBAR ── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .count-badge {
+            background: rgba(255,255,255,0.06);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--dim);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover { background: var(--primary-hover); box-shadow: var(--shadow-btn); }
+
+        /* ── TABLE ── */
+        .table-wrap {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            text-align: left;
+            padding: 14px 18px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 0.875rem;
+            vertical-align: middle;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.015); }
+
+        .cnpj-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--dim);
+        }
+
+        .nome-razao { font-weight: 600; font-size: 0.9rem; }
+        .email-dim  { font-size: 0.75rem; color: var(--dim); margin-top: 2px; }
+
+        .vagas-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vagas-text { font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+
+        .progress-track {
+            width: 60px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+
+        .progress-fill.full { background: var(--danger); }
+        .progress-fill.near { background: var(--warning); }
+
+        /* STATUS BADGE */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-ativo     { background: rgba(16,185,129,0.15);  color: var(--success); }
+        .badge-bloqueado { background: rgba(239,68,68,0.15);   color: var(--danger);  }
+        .badge-expirado  { background: rgba(245,158,11,0.15);  color: var(--warning); }
+        .badge-inativo   { background: rgba(255,255,255,0.06); color: var(--dim);     }
+
+        /* ACTIONS */
+        .actions { display: flex; align-items: center; gap: 4px; }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--dim);
+            cursor: pointer;
+            padding: 7px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .btn-icon:hover          { background: rgba(255,255,255,0.08); color: #fff;         }
+        .btn-icon.danger:hover   { background: rgba(239,68,68,0.15);   color: var(--danger);}
+        .btn-icon.warn:hover     { background: rgba(245,158,11,0.15);  color: var(--warning);}
+        .btn-icon.success:hover  { background: rgba(16,185,129,0.15);  color: var(--success);}
+
+        /* ── MODALS ── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .overlay.open { display: flex; }
+
+        .modal {
+            background: #0a0a0f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 36px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.25s ease-out;
+        }
+
+        .modal.wide { max-width: 720px; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0);    }
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .modal-sub {
+            font-size: 0.8rem;
+            color: var(--dim);
+            margin-bottom: 28px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-grid.one { grid-template-columns: 1fr; }
+
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field.span2 { grid-column: span 2; }
+
+        label { font-size: 0.75rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        input, select, textarea {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            background: rgba(229,48,48,0.04);
+        }
+
+        select option { background: #0a0a0f; }
+        textarea { resize: vertical; min-height: 70px; }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 28px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 10px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        .btn-danger {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: var(--danger);
+            padding: 10px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        /* ── Module Toggles ── */
+        .module-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .module-toggle input[type="checkbox"] { display: none; }
+        .toggle-track {
+            width: 40px; height: 22px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            position: relative;
+            transition: background 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-thumb {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 14px; height: 14px;
+            background: var(--dim);
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .module-toggle input:checked + .toggle-track {
+            background: rgba(34,197,94,0.2);
+            border-color: rgba(34,197,94,0.5);
+        }
+        .module-toggle input:checked + .toggle-track .toggle-thumb {
+            transform: translateX(18px);
+            background: var(--success);
+        }
+        .toggle-label { font-size: 0.82rem; color: var(--text); font-weight: 500; }
+
+        .btn-danger:hover { background: rgba(239,68,68,0.3); }
+
+        /* Detail modal sections */
+        .detail-section { margin-bottom: 24px; }
+        .detail-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dim);
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .detail-item { display: flex; flex-direction: column; gap: 3px; }
+        .detail-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+        .detail-value { font-size: 0.9rem; font-weight: 600; }
+
+        .op-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .op-row:last-child { border-bottom: none; }
+        .op-info { display: flex; align-items: center; gap: 10px; }
+        .op-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800;
+        }
+
+        /* Warning banner */
+        .alert-banner {
+            background: rgba(245,158,11,0.08);
+            border: 1px solid rgba(245,158,11,0.25);
+            border-radius: 14px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+            color: var(--warning);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .empty-row td {
+            text-align: center;
+            padding: 60px;
+            color: var(--dim);
+            font-size: 0.85rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0);    }
+        }
+
+        .main { animation: fadeIn 0.35s ease-out; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-brand">
+        > KITFY_SAAS <span>//</span> SALA_CENTRAL <span>//</span> <span id="admin-email" style="color:#fff;">--</span>
+    </div>
+    <div class="header-right">
+        <span class="admin-badge">MASTER ACCESS</span>
+        <button id="btn-sair" class="btn-header">
+            <i data-lucide="log-out" style="width:14px;"></i> Sair
+        </button>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- Banner de alerta (vencendo em 7 dias) -->
+    <div id="alert-banner" class="alert-banner" style="display:none;">
+        <i data-lucide="alert-triangle" style="width:18px; flex-shrink:0;"></i>
+        <span id="alert-text"></span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value" id="s-total">--</div><i data-lucide="building-2" class="stat-icon" style="width:48px;height:48px;"></i></div>
+        <div class="stat-card success"><div class="stat-label">Clientes Ativos</div><div class="stat-value" id="s-ativos">--</div><i data-lucide="check-circle" class="stat-icon" style="width:48px;height:48px;"></i></div>
+        <div class="stat-card"><div class="stat-label">Notas Processadas</div><div class="stat-value" id="s-notas">--</div><i data-lucide="file-text" class="stat-icon" style="width:48px;height:48px;"></i></div>
+        <div class="stat-card"><div class="stat-label">Volume Total</div><div class="stat-value" id="s-volume">--</div><div class="stat-sub">acumulado</div><i data-lucide="trending-up" class="stat-icon" style="width:48px;height:48px;"></i></div>
+        <div class="stat-card" id="stat-receita"><div class="stat-label">Receita Mensal</div><div class="stat-value" id="s-receita">--</div><div class="stat-sub">clientes ativos</div><i data-lucide="circle-dollar-sign" class="stat-icon" style="width:48px;height:48px;"></i></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="section-title">
+            <i data-lucide="users" style="color:var(--primary); width:18px;"></i>
+            Clientes SaaS
+            <span class="count-badge" id="total-badge">--</span>
+        </div>
+        <button id="btn-abrir-novo" class="btn-primary">
+            <i data-lucide="plus" style="width:16px;"></i> Novo Cliente
+        </button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>CNPJ / Razão Social</th>
+                    <th>Vagas</th>
+                    <th>Mensalidade</th>
+                    <th>Validade</th>
+                    <th>Status</th>
+                    <th style="text-align:center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr class="empty-row"><td colspan="6">Carregando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- MODAL: NOVO CLIENTE -->
+<div class="overlay" id="modal-novo">
+    <div class="modal">
+        <div class="modal-title">Novo Cliente</div>
+        <div class="modal-sub">Cadastrar nova empresa contratante no SaaS.</div>
+        <div class="form-grid" id="form-novo">
+            <div class="field span2">
+                <label>CNPJ</label>
+                <input type="text" id="n-cnpj" placeholder="00.000.000/0000-00" maxlength="18" />
+            </div>
+            <div class="field span2">
+                <label>Razão Social</label>
+                <input type="text" id="n-razao" placeholder="Nome da empresa" />
+            </div>
+            <div class="field">
+                <label>E-mail do Gestor</label>
+                <input type="email" id="n-email" placeholder="gestor@empresa.gov.br" />
+            </div>
+            <div class="field">
+                <label>Plano de Vagas</label>
+                <input type="number" id="n-vagas" value="2" min="1" max="50" />
+            </div>
+            <div class="field">
+                <label>Mensalidade (R$)</label>
+                <input type="number" id="n-mensalidade" value="497" step="0.01" />
+            </div>
+            <div class="field">
+                <label>Validade da Assinatura</label>
+                <input type="date" id="n-validade" />
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button id="btn-cancel-novo" class="btn-cancel">Cancelar</button>
+            <button id="btn-salvar-novo" class="btn-primary">
+                <i data-lucide="save" style="width:14px;"></i> Cadastrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: EDITAR CLIENTE -->
+<div class="overlay" id="modal-editar">
+    <div class="modal">
+        <div class="modal-title">Editar Cliente</div>
+        <div class="modal-sub" id="edit-sub">--</div>
+        <input type="hidden" id="edit-cnpj" />
+        <div class="form-grid">
+            <div class="field">
+                <label>Status</label>
+                <select id="edit-status">
+                    <option value="ativo">Ativo</option>
+                    <option value="bloqueado">Bloqueado</option>
+                    <option value="expirado">Expirado</option>
+                    <option value="inativo">Inativo</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Plano de Vagas</label>
+                <input type="number" id="edit-vagas" min="1" max="50" />
+            </div>
+            <div class="field">
+                <label>Mensalidade (R$)</label>
+                <input type="number" id="edit-mensalidade" step="0.01" />
+            </div>
+            <div class="field">
+                <label>Validade da Assinatura</label>
+                <input type="date" id="edit-validade" />
+            </div>
+            <div class="field">
+                <label>Nome do Contato</label>
+                <input type="text" id="edit-contato-nome" placeholder="Responsável" />
+            </div>
+            <div class="field">
+                <label>Telefone do Contato</label>
+                <input type="text" id="edit-contato-tel" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="field span2">
+                <label>Observações Internas</label>
+                <textarea id="edit-obs" placeholder="Notas sobre este cliente..."></textarea>
+            </div>
+            <div class="field span2">
+                <label style="margin-bottom:10px;">Módulos do Plano</label>
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <label class="module-toggle">
+                        <input type="checkbox" id="mod-word" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                        <span class="toggle-label">Recibo Word</span>
+                    </label>
+                    <label class="module-toggle">
+                        <input type="checkbox" id="mod-ia-gemini" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                        <span class="toggle-label">Humanização IA (Gemini)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button id="btn-cancel-edit" class="btn-cancel">Cancelar</button>
+            <button id="btn-salvar-edit" class="btn-primary">
+                <i data-lucide="save" style="width:14px;"></i> Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETALHE DO CLIENTE -->
+<div class="overlay" id="modal-detalhe">
+    <div class="modal wide">
+        <div class="modal-title" id="det-titulo">--</div>
+        <div class="modal-sub" id="det-cnpj-mono" style="font-family:'JetBrains Mono',monospace;">--</div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">Dados Gerais</div>
+            <div class="detail-grid" id="det-grid"></div>
+        </div>
+
+        <div class="detail-section">
+            <div class="detail-section-title">Operadores Cadastrados</div>
+            <div id="det-operadores"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button id="btn-cancel-det" class="btn-cancel">Fechar</button>
+            <button id="btn-edit-det" class="btn-primary">
+                <i data-lucide="pencil" style="width:14px;"></i> Editar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CONFIRMAR DELETE -->
+<div class="overlay" id="modal-delete">
+    <div class="modal" style="max-width:420px; text-align:center;">
+        <i data-lucide="trash-2" style="width:40px; height:40px; color:var(--danger); margin-bottom:16px;"></i>
+        <div class="modal-title" style="justify-content:center;">Deletar Cliente</div>
+        <div class="modal-sub" id="del-sub" style="text-align:center; margin-bottom:12px;">--</div>
+        <p style="color:var(--dim); font-size:0.8rem; line-height:1.6; margin:0 0 24px 0;">
+            Isso vai remover <strong style="color:#fff;">permanentemente</strong> todos os usuários,
+            notas e escolas desta empresa. A operação não pode ser desfeita.
+        </p>
+        <input type="hidden" id="del-cnpj" />
+        <div class="modal-actions" style="justify-content:center;">
+            <button id="btn-cancel-del" class="btn-cancel">Cancelar</button>
+            <button id="btn-confirm-del" class="btn-danger">
+                <i data-lucide="trash-2" style="width:14px;"></i> Deletar Tudo
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Utilitários ──────────────────────────────────────────────
+
+
+
+    function fmtMoeda(v) {
+        if (v == null || v === '' || isNaN(Number(v))) return '—';
+        return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function fmtData(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+    }
+
+    function fmtCNPJ(c) {
+        const n = String(c).replace(/\D/g,'').padStart(14,'0');
+        return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+
+    function vencendoBadge(validade) {
+        if (!validade) return '';
+        const dias = Math.ceil((new Date(validade) - new Date()) / 86400000);
+        if (dias < 0)  return `<span style="color:var(--danger); font-size:0.7rem; font-weight:700;">VENCIDO</span>`;
+        if (dias <= 7) return `<span style="color:var(--warning); font-size:0.7rem; font-weight:700;">⚠ ${dias}d</span>`;
+        return '';
+    }
+
+    function badgeStatus(status) {
+        const map = {
+            'ativo':     '<span class="badge badge-ativo">Ativo</span>',
+            'bloqueado': '<span class="badge badge-bloqueado">Bloqueado</span>',
+            'expirado':  '<span class="badge badge-expirado">Expirado</span>',
+            'inativo':   '<span class="badge badge-inativo">Inativo</span>'
+        };
+        return map[status] || `<span class="badge badge-inativo">${escapeHtml(status)}</span>`;
+    }
+
+    function api(path, opts = {}) {
+        return fetch(path, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+            ...opts
+        }).then(r => r.json());
+    }
+
+    // ── Auth Check ───────────────────────────────────────────────
+    (function checkAuth() {
+        const _sysUser = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!_sysUser) return window.location.href = 'sys-auth-verify.html';
+        const nivelOk = ['admin', 'super_admin', 'master'].includes(_sysUser.nivel);
+        if (!nivelOk) return window.location.href = 'sys-auth-verify.html';
+        document.getElementById('admin-email').textContent = _sysUser.email || 'ADMIN';
+    })();
+
+    async function sair() {
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        localStorage.removeItem('user');
+        window.location.href = 'sys-auth-verify.html';
+    }
+
+    // ── Load Stats ───────────────────────────────────────────────
+    async function carregarStats() {
+        const data = await api('/api/admin/stats');
+        if (!data.success) return;
+        const s = data.stats;
+
+        document.getElementById('s-total').textContent   = s.total_clientes;
+        document.getElementById('s-ativos').textContent  = s.clientes_ativos;
+        document.getElementById('s-notas').textContent   = Number(s.total_notas || 0).toLocaleString('pt-BR');
+        document.getElementById('s-volume').textContent  = fmtMoeda(s.volume_financeiro).replace('R$ ','R$ ').split(',')[0];
+        document.getElementById('s-receita').textContent = fmtMoeda(s.receita_mensal);
+
+        if (s.vencendo_em_7d > 0) {
+            const banner = document.getElementById('alert-banner');
+            document.getElementById('alert-text').textContent =
+                `${s.vencendo_em_7d} cliente${s.vencendo_em_7d > 1 ? 's' : ''} com assinatura vencendo nos próximos 7 dias. Verifique e renove antes do bloqueio automático.`;
+            banner.style.display = 'flex';
+        }
+    }
+
+    // ── Load Empresas ────────────────────────────────────────────
+    let empresas = [];
+
+    async function carregarEmpresas() {
+        const data = await api('/api/admin/empresas');
+        if (!data.success) return;
+        empresas = data.empresas.filter(e => e.cnpj !== '00000000000000');
+
+        document.getElementById('total-badge').textContent = empresas.length;
+
+        const tbody = document.getElementById('table-body');
+        if (!empresas.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">Nenhum cliente cadastrado ainda.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = empresas.map(e => {
+            const ocupadas = e.vagas_ocupadas || 0;
+            const total    = e.plano_vagas || 1;
+            const pct      = Math.round((ocupadas / total) * 100);
+            const barClass = pct >= 100 ? 'full' : pct >= 80 ? 'near' : '';
+
+            return `
+            <tr>
+                <td>
+                    <div class="nome-razao">${escapeHtml(e.razao_social || '—')}</div>
+                    <div class="cnpj-mono">${fmtCNPJ(e.cnpj)}</div>
+                    ${e.email_gestor ? `<div class="email-dim">${escapeHtml(e.email_gestor)}</div>` : ''}
+                </td>
+                <td>
+                    <div class="vagas-bar">
+                        <span class="vagas-text">${ocupadas}/${total}</span>
+                        <div class="progress-track">
+                            <div class="progress-fill ${barClass}" style="width:${Math.min(pct,100)}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>${fmtMoeda(e.valor_mensalidade)}</td>
+                <td>
+                    <div>${fmtData(e.validade_assinatura)}</div>
+                    ${vencendoBadge(e.validade_assinatura)}
+                </td>
+                <td>${badgeStatus(e.status_assinatura)}</td>
+                <td>
+                    <div class="actions" style="justify-content:center;">
+                        <a href="index.html?simular=${escapeHtml(e.cnpj)}" class="btn-icon success" title="Simular Acesso" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">
+                            <i data-lucide="play" style="width:15px;"></i>
+                        </a>
+                        <button class="btn-icon" title="Ver detalhes" data-ver-cnpj="${escapeHtml(e.cnpj)}">
+                            <i data-lucide="eye" style="width:15px;"></i>
+                        </button>
+                        <button class="btn-icon" title="Editar" data-edit-cnpj="${escapeHtml(e.cnpj)}">
+                            <i data-lucide="pencil" style="width:15px;"></i>
+                        </button>
+                        <button class="btn-icon ${e.status_assinatura === 'ativo' ? 'warn' : 'success'}"
+                            title="${e.status_assinatura === 'ativo' ? 'Bloquear' : 'Reativar'}"
+                            data-toggle-cnpj="${escapeHtml(e.cnpj)}" data-toggle-status="${escapeHtml(e.status_assinatura)}">
+                            <i data-lucide="${e.status_assinatura === 'ativo' ? 'lock' : 'unlock'}" style="width:15px;"></i>
+                        </button>
+                        <button class="btn-icon danger" title="Deletar" data-del-cnpj="${escapeHtml(e.cnpj)}" data-del-razao="${escapeHtml(e.razao_social || '')}">
+                            <i data-lucide="trash-2" style="width:15px;"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        lucide.createIcons();
+    }
+
+    // ── MODAL NOVO ───────────────────────────────────────────────
+    function abrirModalNovo() {
+        document.getElementById('n-cnpj').value = '';
+        document.getElementById('n-razao').value = '';
+        document.getElementById('n-email').value = '';
+        document.getElementById('n-vagas').value = '2';
+        document.getElementById('n-mensalidade').value = '497';
+        document.getElementById('n-validade').value = '';
+        document.getElementById('modal-novo').classList.add('open');
+        lucide.createIcons();
+    }
+
+    async function salvarNovoCliente() {
+        const cnpj      = document.getElementById('n-cnpj').value.trim();
+        const razao     = document.getElementById('n-razao').value.trim();
+        const email     = document.getElementById('n-email').value.trim();
+        const vagas     = document.getElementById('n-vagas').value;
+        const mens      = document.getElementById('n-mensalidade').value;
+        const validade  = document.getElementById('n-validade').value;
+
+        if (!cnpj || !razao) return alert('CNPJ e Razão Social são obrigatórios.');
+
+        const data = await api('/api/admin/empresas', {
+            method: 'POST',
+            body: JSON.stringify({ cnpj, razao_social: razao, email_gestor: email, plano_vagas: vagas })
+        });
+
+        if (!data.success) return alert('Erro: ' + data.error);
+
+        // Se tiver mensalidade ou validade, faz o update logo depois
+        if (mens || validade) {
+            const cleanCnpj = cnpj.replace(/\D/g,'').padStart(14,'0');
+            await api(`/api/admin/empresas/${cleanCnpj}`, {
+                method: 'PUT',
+                body: JSON.stringify({ valor_mensalidade: mens || null, validade_assinatura: validade || null })
+            });
+        }
+
+        fecharModais();
+        recarregar();
+    }
+
+    // ── MODAL EDITAR ─────────────────────────────────────────────
+    function abrirEditar(cnpj) {
+        const e = empresas.find(x => x.cnpj === cnpj);
+        if (!e) return;
+
+        document.getElementById('edit-cnpj').value          = e.cnpj;
+        document.getElementById('edit-sub').textContent      = fmtCNPJ(e.cnpj) + ' — ' + (e.razao_social || '');
+        document.getElementById('edit-status').value         = e.status_assinatura || 'ativo';
+        document.getElementById('edit-vagas').value          = e.plano_vagas || 2;
+        document.getElementById('edit-mensalidade').value    = e.valor_mensalidade || 497;
+        document.getElementById('edit-validade').value       = e.validade_assinatura ? e.validade_assinatura.substring(0,10) : '';
+        document.getElementById('edit-contato-nome').value   = e.contato_nome || '';
+        document.getElementById('edit-contato-tel').value    = e.contato_telefone || '';
+        document.getElementById('edit-obs').value            = e.observacoes || '';
+
+        // Módulos: default tudo ativo se ainda não configurado
+        let modulos = { word: true, ia_gemini: true };
+        if (e.modulos_ativos) {
+            try { modulos = JSON.parse(e.modulos_ativos); } catch(_) {}
+        }
+        document.getElementById('mod-word').checked      = modulos.word !== false;
+        document.getElementById('mod-ia-gemini').checked = modulos.ia_gemini !== false;
+
+        document.getElementById('modal-editar').classList.add('open');
+        lucide.createIcons();
+    }
+
+    async function salvarEdicao() {
+        const cnpj = document.getElementById('edit-cnpj').value;
+        const body = {
+            status_assinatura:  document.getElementById('edit-status').value,
+            plano_vagas:        document.getElementById('edit-vagas').value,
+            valor_mensalidade:  document.getElementById('edit-mensalidade').value,
+            validade_assinatura:document.getElementById('edit-validade').value || null,
+            contato_nome:       document.getElementById('edit-contato-nome').value || null,
+            contato_telefone:   document.getElementById('edit-contato-tel').value || null,
+            observacoes:        document.getElementById('edit-obs').value || null
+        };
+
+        const data = await api(`/api/admin/empresas/${cnpj}`, { method: 'PUT', body: JSON.stringify(body) });
+        if (!data.success) return alert('Erro: ' + data.error);
+
+        // Salva módulos em chamada separada
+        const modulos = {
+            word:      document.getElementById('mod-word').checked,
+            ia_gemini: document.getElementById('mod-ia-gemini').checked,
+        };
+        await api(`/api/admin/empresas/${cnpj}/modulos`, { method: 'PATCH', body: JSON.stringify(modulos) });
+
+        fecharModais();
+        recarregar();
+    }
+
+    // ── DETAIL VIEW ──────────────────────────────────────────────
+    let detalheAtualCnpj = null;
+
+    async function verDetalhe(cnpj) {
+        detalheAtualCnpj = cnpj;
+        const data = await api(`/api/admin/empresas/${cnpj}`);
+        if (!data.success) return alert('Erro: ' + data.error);
+        const e = data.empresa;
+
+        document.getElementById('det-titulo').textContent   = escapeHtml(e.razao_social || '—');
+        document.getElementById('det-cnpj-mono').textContent = fmtCNPJ(e.cnpj);
+
+        document.getElementById('det-grid').innerHTML = `
+            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${badgeStatus(e.status_assinatura)}</div></div>
+            <div class="detail-item"><div class="detail-label">Mensalidade</div><div class="detail-value">${fmtMoeda(e.valor_mensalidade)}</div></div>
+            <div class="detail-item"><div class="detail-label">Validade</div><div class="detail-value">${fmtData(e.validade_assinatura)} ${vencendoBadge(e.validade_assinatura)}</div></div>
+            <div class="detail-item"><div class="detail-label">Vagas</div><div class="detail-value">${e.vagas_ocupadas || 0} / ${e.plano_vagas}</div></div>
+            <div class="detail-item"><div class="detail-label">Notas Processadas</div><div class="detail-value">${(e.total_notas || 0).toLocaleString('pt-BR')}</div></div>
+            <div class="detail-item"><div class="detail-label">Volume Processado</div><div class="detail-value">${fmtMoeda(e.volume_total)}</div></div>
+            <div class="detail-item"><div class="detail-label">E-mail Gestor</div><div class="detail-value" style="font-size:0.8rem;">${escapeHtml(e.email_gestor || '—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Cadastrado em</div><div class="detail-value">${fmtData(e.criado_em)}</div></div>
+            ${e.contato_nome ? `<div class="detail-item"><div class="detail-label">Contato</div><div class="detail-value">${escapeHtml(e.contato_nome)}${e.contato_telefone ? ' · ' + escapeHtml(e.contato_telefone) : ''}</div></div>` : ''}
+            ${e.observacoes ? `<div class="detail-item" style="grid-column:span 2;"><div class="detail-label">Observações</div><div class="detail-value" style="font-size:0.82rem; font-weight:400; color:var(--dim); white-space:pre-wrap;">${escapeHtml(e.observacoes)}</div></div>` : ''}
+        `;
+
+        const ops = e.operadores || [];
+        document.getElementById('det-operadores').innerHTML = ops.length
+            ? ops.map(op => `
+                <div class="op-row">
+                    <div class="op-info">
+                        <div class="op-avatar">${escapeHtml(op.nome.substring(0,2).toUpperCase())}</div>
+                        <div>
+                            <div style="font-weight:600; font-size:0.875rem;">${escapeHtml(op.nome)}</div>
+                            <div style="font-size:0.75rem; color:var(--dim);">${escapeHtml(op.email)}</div>
+                        </div>
+                    </div>
+                    <span class="badge badge-inativo" style="font-size:0.65rem;">${escapeHtml(op.nivel)}</span>
+                </div>`).join('')
+            : '<p style="color:var(--dim); font-size:0.8rem;">Nenhum operador cadastrado ainda.</p>';
+
+        document.getElementById('modal-detalhe').classList.add('open');
+        lucide.createIcons();
+    }
+
+    function abrirEdicaoDoDetalhe() {
+        fecharModais();
+        if (detalheAtualCnpj) abrirEditar(detalheAtualCnpj);
+    }
+
+    // ── TOGGLE STATUS ────────────────────────────────────────────
+    async function toggleStatus(cnpj, statusAtual) {
+        const novoStatus = statusAtual === 'ativo' ? 'bloqueado' : 'ativo';
+        const label = novoStatus === 'ativo' ? 'reativar' : 'bloquear';
+        if (!confirm(`Deseja ${label} este cliente?`)) return;
+
+        const data = await api(`/api/admin/empresas/${cnpj}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status_assinatura: novoStatus })
+        });
+
+        if (!data.success) return alert('Erro: ' + data.error);
+        recarregar();
+    }
+
+    // ── DELETE ───────────────────────────────────────────────────
+    function abrirDelete(cnpj, nome) {
+        document.getElementById('del-cnpj').value = cnpj;
+        document.getElementById('del-sub').innerHTML = `<strong style="color:#fff;">${escapeHtml(nome)}</strong><br><span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem;">${fmtCNPJ(cnpj)}</span>`;
+        document.getElementById('modal-delete').classList.add('open');
+        lucide.createIcons();
+    }
+
+    async function confirmarDelete() {
+        const cnpj = document.getElementById('del-cnpj').value;
+        const data = await api(`/api/admin/empresas/${cnpj}`, { method: 'DELETE' });
+        if (!data.success) return alert('Erro: ' + data.error);
+        fecharModais();
+        recarregar();
+    }
+
+    // ── HELPERS ──────────────────────────────────────────────────
+    function fecharModais() {
+        document.querySelectorAll('.overlay').forEach(o => o.classList.remove('open'));
+    }
+
+    document.querySelectorAll('.overlay').forEach(o => {
+        o.addEventListener('click', e => { if (e.target === o) fecharModais(); });
+    });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModais(); });
+
+    async function recarregar() {
+        await Promise.all([carregarStats(), carregarEmpresas()]);
+    }
+
+    // ── INIT ─────────────────────────────────────────────────────
+    recarregar();
+
+    document.getElementById('btn-sair').addEventListener('click', () => sair());
+    document.getElementById('btn-abrir-novo').addEventListener('click', () => abrirModalNovo());
+    document.getElementById('btn-cancel-novo').addEventListener('click', () => fecharModais());
+    document.getElementById('btn-salvar-novo').addEventListener('click', () => salvarNovoCliente());
+    document.getElementById('btn-cancel-edit').addEventListener('click', () => fecharModais());
+    document.getElementById('btn-salvar-edit').addEventListener('click', () => salvarEdicao());
+    document.getElementById('btn-cancel-det').addEventListener('click', () => fecharModais());
+    document.getElementById('btn-edit-det').addEventListener('click', () => abrirEdicaoDoDetalhe());
+    document.getElementById('btn-cancel-del').addEventListener('click', () => fecharModais());
+    document.getElementById('btn-confirm-del').addEventListener('click', () => confirmarDelete());
+
+    document.getElementById('table-body').addEventListener('click', e => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.dataset.verCnpj)    { verDetalhe(btn.dataset.verCnpj); return; }
+        if (btn.dataset.editCnpj)   { abrirEditar(btn.dataset.editCnpj); return; }
+        if (btn.dataset.toggleCnpj) { toggleStatus(btn.dataset.toggleCnpj, btn.dataset.toggleStatus); return; }
+        if (btn.dataset.delCnpj)    { abrirDelete(btn.dataset.delCnpj, btn.dataset.delRazao); }
+    });
+</script>
+</body>
+</html>

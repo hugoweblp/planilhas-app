@@ -1,6 +1,6 @@
 :root {
   --font-main: 'Inter', sans-serif;
-  --font-title: 'Outfit', sans-serif;
+  --font-title: 'Plus Jakarta Sans', 'Outfit', sans-serif;
 
   /* Cores Premium */
   --bg-app: #0b0e14;
@@ -222,11 +222,23 @@ nav {
 .stat-card {
   background-color: var(--bg-card);
   padding: 24px;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   gap: 20px;
+  box-shadow: 
+    inset 3px 3px 6px rgba(255, 255, 255, 0.06), 
+    inset -4px -4px 8px rgba(0, 0, 0, 0.6), 
+    8px 8px 20px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    inset 4px 4px 8px rgba(255, 255, 255, 0.08), 
+    inset -5px -5px 10px rgba(0, 0, 0, 0.7), 
+    12px 12px 25px rgba(0, 0, 0, 0.8);
 }
 
 .stat-icon {
@@ -264,9 +276,20 @@ nav {
 
 .card {
   background-color: var(--bg-card);
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   padding: 24px;
+  box-shadow: 
+    inset 3px 3px 8px rgba(255, 255, 255, 0.04), 
+    inset -5px -5px 12px rgba(0, 0, 0, 0.6), 
+    10px 10px 25px rgba(0, 0, 0, 0.65);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card:hover {
+  box-shadow: 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.06), 
+    inset -6px -6px 15px rgba(0, 0, 0, 0.7), 
+    14px 14px 30px rgba(0, 0, 0, 0.8);
 }
 
 .card-header {
@@ -301,13 +324,17 @@ nav {
 
 /* Upload Dropzone */
 .drop-zone {
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
   padding: 40px;
   text-align: center;
   transition: all 0.3s ease;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.01);
+  box-shadow: 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.03), 
+    inset -4px -4px 10px rgba(0, 0, 0, 0.5),
+    6px 6px 15px rgba(0, 0, 0, 0.4);
 }
 
 .drop-zone:hover, .drop-zone.active {
@@ -409,14 +436,17 @@ nav {
 
 .modal-content {
   background-color: var(--bg-card);
-  width: 100%;
-  max-width: 1100px;
-  max-height: 90vh;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
+  width: 95vw;
+  max-width: 1400px;
+  height: 90vh;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 
+    inset 4px 4px 10px rgba(255, 255, 255, 0.05), 
+    inset -6px -6px 16px rgba(0, 0, 0, 0.7), 
+    0 30px 60px -12px rgba(0, 0, 0, 0.8);
   overflow: hidden;
 }
 
@@ -865,4 +895,67 @@ nav {
 .total-preview strong { color: var(--text-main); font-size: 1.25rem; margin-left: 8px; }
 
 .actions { display: flex; gap: 12px; }
+
+/* ==========================================================================
+   SCROLLBAR CUSTOMIZADA (LIQUID GLASS / BLOOD NEON)
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(3, 0, 0, 0.6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255, 0, 0, 0.3), rgba(255, 0, 0, 0.1));
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(255, 0, 0, 0.6), rgba(255, 0, 0, 0.3));
+  border-color: rgba(255, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   BOTÕES DE FECHAMENTO PREMIUM (.btn-close, .ia-picker-close)
+   ========================================================================== */
+.btn-close, 
+.ia-picker-close,
+button[id^="close-"] {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-dim) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  padding: 0 !important;
+}
+
+.btn-close:hover, 
+.ia-picker-close:hover,
+button[id^="close-"]:hover {
+  background: rgba(255, 0, 0, 0.15) !important;
+  border-color: rgba(255, 0, 0, 0.4) !important;
+  color: #ff0000 !important;
+  transform: rotate(90deg) scale(1.08) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3) !important;
+}
+
+.btn-close i, 
+button[id^="close-"] i {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2.5px !important;
+}
 

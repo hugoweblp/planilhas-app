@@ -11,8 +11,9 @@
  */
 
 const ExcelJS = require('exceljs');
-const path = require('path');
-const fs = require('fs');
+const path    = require('path');
+const fs      = require('fs');
+const { VENDOR_INITIALS } = require('../constants/templates');
 
 const TEMPLATE_PATH = path.join(__dirname, '../../templates/base.xlsx');
 const OUTPUT_DIR    = path.join(__dirname, '../../output');
@@ -49,28 +50,28 @@ function gerarParDePercentuais(valorUnit = 0) {
 }
 
 /**
- * Encontra o número de uma linha que contém um texto específico em qualquer célula
+ * Encontra o número de uma linha que contém um texto específico em qualquer célula.
+ * Usa for loop em vez de eachRow para permitir early-return real ao achar o alvo.
  * @returns {number|null}
  */
 function encontrarLinha(sheet, texto) {
-  let linhaEncontrada = null;
-  sheet.eachRow({ includeEmpty: false }, (row, rowNum) => {
-    if (linhaEncontrada) return;
+  const textoBusca = texto.toLowerCase();
+  for (let rowNum = 1; rowNum <= sheet.rowCount; rowNum++) {
+    const row = sheet.getRow(rowNum);
+    let encontrado = false;
     row.eachCell({ includeEmpty: false }, (cell) => {
-      if (linhaEncontrada) return;
+      if (encontrado) return;
       const val = cell.value;
       let str = '';
       if (typeof val === 'string') str = val;
       else if (val?.richText) str = val.richText.map(r => r.text).join('');
       else if (val?.formula) str = '';
       else str = String(val || '');
-
-      if (str.toLowerCase().includes(texto.toLowerCase())) {
-        linhaEncontrada = rowNum;
-      }
+      if (str.toLowerCase().includes(textoBusca)) encontrado = true;
     });
-  });
-  return linhaEncontrada;
+    if (encontrado) return rowNum;
+  }
+  return null;
 }
 
 /**
@@ -195,7 +196,7 @@ function preencherCabecalho(sheet, dados, numeroPesquisa) {
   const nomeEscola = comprador[`nome${numeroPesquisa}`] || comprador.nome || comprador.razaoSocial;
   const enderecoEscola = comprador[`endereco${numeroPesquisa}`] || comprador.enderecoAPI || comprador.enderecoCompleto;
 
-  console.log(`   [DEBUG] Aba ${numeroPesquisa}: "${nomeEscola}" | "${enderecoEscola}"`);
+  if (process.env.NODE_ENV !== 'production') console.log(`   [DEBUG] Aba ${numeroPesquisa}: "${nomeEscola}" | "${enderecoEscola}"`);
 
   try { sheet.getCell('A9').value  = nomeEscola; }          catch(e) {}
   try { sheet.getCell('G9').value  = comprador.cnpjFmt; }       catch(e) {}
@@ -219,8 +220,10 @@ function preencherItensPadrao(sheet, produtos) {
   const linhaTotalValor = linhaBloco - 1;  // linha de TOTAL, antes do BLOCO IV
   const disponiveis     = linhaTotalValor - linhaInicio;
 
-  console.log(`   [PADRÃO] Produtos: L${linhaInicio}–L${linhaTotalValor-1} | Total: L${linhaTotalValor} | BLOCO IV: L${linhaBloco}`);
-  console.log(`   [PADRÃO] Disponíveis: ${disponiveis} | Necessários: ${produtos.length}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`   [PADRÃO] Produtos: L${linhaInicio}–L${linhaTotalValor-1} | Total: L${linhaTotalValor} | BLOCO IV: L${linhaBloco}`);
+    console.log(`   [PADRÃO] Disponíveis: ${disponiveis} | Necessários: ${produtos.length}`);
+  }
 
   // PADRÃO = sem negrito
   const novaLinhaTotalValor = ajustarLinhasProduto(sheet, linhaInicio, linhaTotalValor, produtos.length, false);
@@ -235,8 +238,8 @@ function preencherItensPadrao(sheet, produtos) {
     row.getCell(1).value = String(i + 1).padStart(2, '0');
 
     if (prod) {
-      row.getCell(2).value = prod.descricao;
-      row.getCell(5).value = prod.und;
+      row.getCell(2).value = sanitizarTexto(prod.descricao);
+      row.getCell(5).value = sanitizarTexto(prod.und);
       row.getCell(6).value = prod.quantidade;
       row.getCell(7).value = prod.valorUnit;
       row.getCell(8).value = { formula: `G${linha}*F${linha}` };
@@ -260,6 +263,15 @@ function preencherItensPadrao(sheet, produtos) {
 }
 
 /**
+ * Evita formula injection se o arquivo for exportado como CSV ou aberto em ferramentas legadas.
+ * No xlsx gerado por ExcelJS o risco é baixo (shared strings), mas é boa prática sanitizar.
+ */
+function sanitizarTexto(valor) {
+  if (typeof valor !== 'string') return valor;
+  return /^[=+\-@\t\r]/.test(valor) ? `'${valor}` : valor;
+}
+
+/**
  * Preenche os percentuais nas abas BASE 02 e BASE 03
  * @param {string} chavePercentual - 'p2' ou 'p3' para pegar do objeto mapeado
  */
@@ -275,7 +287,7 @@ function preencherItensBase(sheet, abaName, produtosMapeados, disponiveisTemplat
 
   const isBold = (abaName === ABAS.base2);
 
-  console.log(`   [${abaName}] Aplicando hierarquia de preços... | negrito: ${isBold}`);
+  if (process.env.NODE_ENV !== 'production') console.log(`   [${abaName}] Aplicando hierarquia de preços... | negrito: ${isBold}`);
 
   const novaLinhaTotalValor = ajustarLinhasProduto(sheet, linhaInicio, linhaTotalValor, produtosMapeados.length, isBold);
 
@@ -289,11 +301,11 @@ function preencherItensBase(sheet, abaName, produtosMapeados, disponiveisTemplat
 
     if (item) {
       const percentualItem = item[chavePercentual]; // pega o p2 ou p3 sorteado
-      
-      row.getCell(2).value  = item.descricao;
-      row.getCell(5).value  = item.und;
+
+      row.getCell(2).value  = sanitizarTexto(item.descricao);
+      row.getCell(5).value  = sanitizarTexto(item.und);
       row.getCell(6).value  = item.quantidade;
-      row.getCell(11).value = { formula: `PADRÃO!G${linha}` };
+      row.getCell(11).value = { formula: `'PADRÃO'!G${linha}` }; // aspas obrigatórias para nomes de aba com acento
       row.getCell(12).value = percentualItem;
       row.getCell(13).value = { formula: `K${linha}*L${linha}/100+K${linha}` };
       row.getCell(7).value  = { formula: `M${linha}` };
@@ -323,34 +335,35 @@ function preencherItensBase(sheet, abaName, produtosMapeados, disponiveisTemplat
  * Função principal: gera o Excel com as 3 abas
  */
 async function gerarExcel(dados, outputPath = OUTPUT_DIR) {
-  console.log(`\n📊 Gerando Excel...`);
-  console.log(`   NF: ${dados.nota.numero} | ${dados.totalProdutos} produtos`);
-  console.log(`   Modo: Hierarquia Inteligente (BASE 03 > BASE 02 > PADRÃO)`);
+  const isDev = process.env.NODE_ENV !== 'production';
+
+  if (isDev) {
+    console.log(`\n📊 Gerando Excel...`);
+    console.log(`   NF: ${dados.nota.numero} | ${dados.totalProdutos} produtos`);
+    console.log(`   Modo: Hierarquia Inteligente (BASE 03 > BASE 02 > PADRÃO)`);
+  }
 
   // Prepara os produtos com seus pares de percentuais já definidos
   const produtosMapeados = dados.produtos.map((p, idx) => {
     let p2, p3;
-    
-    console.log(`   [DEBUG] Produto ${idx + 1}: ${p.descricao}`);
-    console.log(`   [DEBUG] Valor Unit: ${p.valorUnit}`);
-    console.log(`   [DEBUG] Percentuais Recebidos:`, p.percentuais);
 
     if (p.percentuais && p.percentuais.p2 !== undefined) {
       p2 = Number(p.percentuais.p2);
       p3 = Number(p.percentuais.p3);
-      console.log(`   [DEBUG] -> Usando valores da TELA: p2=${p2}, p3=${p3}`);
+      if (isDev) console.log(`   [DEBUG] Produto ${idx + 1}: usando percentuais da tela p2=${p2}, p3=${p3}`);
     } else {
       const sorteio = gerarParDePercentuais(p.valorUnit);
       p2 = sorteio.p2;
       p3 = sorteio.p3;
-      console.log(`   [DEBUG] -> Sorteando novos valores: p2=${p2}, p3=${p3}`);
+      if (isDev) console.log(`   [DEBUG] Produto ${idx + 1}: percentuais sorteados p2=${p2}, p3=${p3}`);
     }
-    
+
     return { ...p, p2, p3 };
   });
 
-  if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  if (!fs.existsSync(outputPath)) fs.mkdirSync(outputPath, { recursive: true });
 
+  if (!fs.existsSync(TEMPLATE_PATH)) throw new Error(`Template Excel não encontrado: ${TEMPLATE_PATH}`);
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.readFile(TEMPLATE_PATH);
 
@@ -385,25 +398,19 @@ async function gerarExcel(dados, outputPath = OUTPUT_DIR) {
     .replace(/[^A-Z0-9\s]/gi, '')
     .trim().replace(/\s+/g, ' ').toUpperCase().slice(0, 40);
 
-  const valorSemEspaco = dados.nota.valorTotalFmt.replace('R$ ', 'R$');
+  const valorSemEspaco = (dados.nota.valorTotalFmt || `R$${Number(dados.nota.valorTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`).replace('R$ ', 'R$');
   
   const d = new Date(dados.nota.dataISO);
   const dataFmt = `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth()+1).padStart(2, '0')}.${String(d.getUTCFullYear()).slice(2)}`;
 
-  const vendorInitials = {
-    '03075858000103': 'AN',
-    '61333692000184': 'BP',
-    '13306181000120': 'RS',
-    '62329860000120': 'RC'
-  };
-  const iniciais = vendorInitials[dados.vendedor.cnpj.replace(/\D/g, '').padStart(14, '0')] || 'FORN';
+  const iniciais = VENDOR_INITIALS[dados.vendedor.cnpj.replace(/\D/g, '').padStart(14, '0')] || 'FORN';
 
   const nomeArquivo  = `${nomeEscola} ${valorSemEspaco} - ${dataFmt} - NF ${dados.nota.numero} ${iniciais}.xlsx`;
   const caminhoSaida = path.join(outputPath, nomeArquivo);
 
   await wb.xlsx.writeFile(caminhoSaida);
 
-  console.log(`   ✅ Salvo: ${nomeArquivo}`);
+  if (isDev) console.log(`   ✅ Salvo: ${nomeArquivo}`);
   return { caminho: caminhoSaida, nome: nomeArquivo };
 }
 

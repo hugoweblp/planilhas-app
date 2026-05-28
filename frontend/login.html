@@ -3,261 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - PDDE Control Premium</title>
+    <title>Entrar - Kitfy SaaS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/theme.css">
+    <script src="https://unpkg.com/lucide@0.321.0"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root {
-            --bg-dark: #030000;
-            --card-bg: rgba(10, 0, 0, 0.98);
-            --primary: #ff0000;
-            --primary-hover: #ff3333;
-            --text-main: #ffffff;
-            --text-dim: #94a3b8;
-            --accent: #880000;
-            --border: rgba(255, 0, 0, 0.3);
-            --glow: 0 0 50px rgba(255, 0, 0, 0.5);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Manrope', sans-serif;
-        }
-
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(255, 0, 0, 0.4) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(153, 0, 0, 0.2) 0px, transparent 50%);
-            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 100vh;
             overflow: hidden;
-            color: var(--text-main);
         }
 
         .login-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             padding: 20px;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            animation: kt-fadeIn 0.45s ease-out;
         }
 
         .login-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
             border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 44px 40px 36px;
+            box-shadow: var(--shadow-card);
         }
 
-        .logo-section {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
+        /* Logo */
+        .logo-section { text-align: center; margin-bottom: 32px; }
         .logo-icon {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            width: 60px;
-            height: 60px;
+            background: var(--primary);
+            width: 56px; height: 56px;
             border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            box-shadow: 0 10px 20px rgba(153, 0, 0, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+            box-shadow: 0 8px 24px rgba(229, 48, 48, 0.38);
         }
+        .logo-icon i { color: #fff; width: 26px; height: 26px; }
+        .logo-text { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 700; }
+        .logo-text span { color: var(--primary); }
 
-        .logo-icon i {
-            color: white;
-            width: 32px;
-            height: 32px;
-        }
+        /* Views */
+        .view { animation: kt-fadeIn 0.28s ease-out; }
 
-        .logo-text {
+        .view-header { text-align: center; margin-bottom: 26px; }
+        .view-header h2 {
             font-family: 'Outfit', sans-serif;
-            font-size: 24px;
-            font-weight: 700;
+            font-size: 20px; font-weight: 800;
+            margin-bottom: 6px; letter-spacing: -0.3px;
         }
+        .view-header p { color: var(--text-dim); font-size: 13px; line-height: 1.55; }
 
-        .logo-text span {
-            color: var(--primary);
+        /* Back */
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--text-dim); font-size: 13px; font-weight: 500;
+            cursor: pointer; margin-bottom: 22px; transition: color 0.15s;
+            background: none; border: none; padding: 0;
         }
+        .back-link:hover { color: var(--text-main); }
+        .back-link i { width: 14px; height: 14px; }
 
-        .login-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .login-header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .login-header p {
-            color: var(--text-dim);
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
+        /* Form */
+        .form-group { margin-bottom: 15px; }
         .form-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 11px; font-weight: 600;
             color: var(--text-dim);
-            margin-bottom: 8px;
-            padding-left: 4px;
+            margin-bottom: 7px; padding-left: 2px;
+            text-transform: uppercase; letter-spacing: 0.7px;
         }
-
-        .input-wrapper {
-            position: relative;
-        }
-
+        .input-wrapper { position: relative; }
         .input-wrapper i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
+            position: absolute; left: 13px; top: 50%;
             transform: translateY(-50%);
-            color: var(--text-dim);
-            width: 18px;
-            height: 18px;
+            color: var(--text-muted); width: 15px; height: 15px;
+            pointer-events: none;
         }
-
         .form-group input {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px 12px 12px 42px;
-            color: white;
-            font-size: 15px;
-            transition: all 0.3s;
+            width: 100%; box-sizing: border-box;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 12px 14px 12px 38px;
+            color: var(--text-main); font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
-
         .form-group input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(153, 0, 0, 0.1);
-            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        .form-group input::placeholder { color: var(--text-muted); }
+
+        /* Botão primário */
+        .btn-primary {
+            width: 100%; box-sizing: border-box;
+            background: var(--primary); color: #fff;
+            border: none; border-radius: var(--r-md);
+            padding: 13px; font-size: 15px; font-weight: 700;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+            margin-top: 4px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            letter-spacing: 0.01em;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: var(--shadow-btn);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active { transform: translateY(0); box-shadow: none; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Botão secundário (ghost) */
+        .btn-secondary {
+            width: 100%; box-sizing: border-box;
+            background: transparent; color: var(--text-dim);
+            border: 1px solid var(--border); border-radius: var(--r-md);
+            padding: 13px; font-size: 14px; font-weight: 600;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+        }
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            border-color: var(--border-strong);
         }
 
-        .btn-login {
-            width: 100%;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        /* Alerta de erro */
+        .alert {
+            background: rgba(229, 48, 48, 0.08);
+            border: 1px solid var(--primary-border);
+            color: #ff6b6b;
+            padding: 11px 14px; border-radius: var(--r-sm);
+            font-size: 13px; margin-bottom: 16px;
+            display: none; text-align: center; line-height: 1.45;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(153, 0, 0, 0.3);
-            filter: brightness(1.1);
+        /* Alerta de sucesso inline */
+        .success-inline {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.22);
+            border-radius: var(--r-sm);
+            padding: 10px 14px; font-size: 12px; color: var(--success);
+            text-align: center; margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+        }
+        .success-inline i { width: 14px; height: 14px; flex-shrink: 0; }
+
+        /* Spinner */
+        .spinner { animation: kt-spin 1.1s linear infinite; width: 16px; height: 16px; display: none; }
+
+        /* Divider */
+        .divider {
+            display: flex; align-items: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1.2px;
+        }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+        .divider span { padding: 0 12px; }
+
+        /* Google SSO container */
+        .gsi-container { display: flex; justify-content: center; width: 100%; min-height: 44px; }
+
+        /* Link escape (não usa Gmail) */
+        .text-link {
+            background: none; border: none; padding: 0;
+            color: var(--text-dim); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: color 0.15s;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: 'Inter', sans-serif;
+        }
+        .text-link:hover { color: var(--text-main); }
+        .text-link i { width: 14px; height: 14px; }
+
+        /* OTP input */
+        .otp-input {
+            text-align: center !important;
+            letter-spacing: 10px !important;
+            font-size: 22px !important;
+            font-weight: 700 !important;
+            padding-left: 24px !important;
         }
 
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
+        /* Footer */
         .login-footer {
             text-align: center;
-            margin-top: 24px;
-            font-size: 13px;
-            color: var(--text-dim);
-        }
-
-        .alert {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #ff3131;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            display: none;
-            text-align: center;
-        }
-
-        .spinner {
-            animation: rotate 2s linear infinite;
-            width: 18px;
-            height: 18px;
-            display: none;
-        }
-
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
+            margin-top: 28px;
+            color: var(--text-muted);
+            font-size: 11px; line-height: 1.6;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="login-card">
+
+            <!-- LOGO — sempre visível -->
             <div class="logo-section">
                 <div class="logo-icon">
-                    <i data-lucide="shield-check"></i>
+                    <i data-lucide="boxes"></i>
                 </div>
-                <div class="logo-text">PDDE <span>Control</span></div>
+                <div class="logo-text">Kitfy <span>SaaS</span></div>
             </div>
 
-            <div class="login-header">
-                <h1>Bem-vindo de volta</h1>
-                <p>Acesse seu painel administrativo</p>
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW PRINCIPAL                             -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-main" class="view">
+                <div class="view-header">
+                    <h2>Bem-vindo de volta</h2>
+                    <p>Acesse com sua conta corporativa Google.</p>
+                </div>
+
+                <div id="login-error" class="alert"></div>
+
+                <!-- Google SSO — único CTA -->
+                <div class="gsi-container">
+                    <div id="gsi-button-slot-login"></div>
+                </div>
+
+                <!-- Escape para não-Gmail (minúsculo, não chama atenção) -->
+                <p style="text-align:center; margin-top:18px;">
+                    <button id="btn-show-otp" class="text-link" style="font-size:12px; color:var(--text-muted);">
+                        Não usa Gmail? Entrar com código por e-mail
+                    </button>
+                </p>
             </div>
 
-            <div id="login-error" class="alert">Usuário ou senha incorretos</div>
-
-            <form id="login-form">
-                <div class="form-group">
-                    <label>Usuário</label>
-                    <div class="input-wrapper">
-                        <i data-lucide="user"></i>
-                        <input type="text" id="username" placeholder="Seu usuário" required autocomplete="username">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Senha</label>
-                    <div class="input-wrapper">
-                        <i data-lucide="lock"></i>
-                        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-login" id="btn-submit">
-                    <span>Entrar no Sistema</span>
-                    <i data-lucide="arrow-right" class="arrow-icon"></i>
-                    <i data-lucide="loader" class="spinner"></i>
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: CÓDIGO OTP                           -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-otp" class="view" style="display:none;">
+                <button id="btn-otp-back" class="back-link">
+                    <i data-lucide="arrow-left"></i> Voltar
                 </button>
-            </form>
+
+                <div class="view-header">
+                    <h2>Entrar com código</h2>
+                    <p>Informe seu e-mail e CNPJ para receber um código de acesso seguro.</p>
+                </div>
+
+                <div id="otp-error" class="alert"></div>
+
+                <!-- Passo 1 -->
+                <div id="otp-step-1">
+                    <form id="otp-request-form">
+                        <div class="form-group">
+                            <label>E-mail</label>
+                            <div class="input-wrapper">
+                                <i data-lucide="mail"></i>
+                                <input type="email" id="otp-email" placeholder="nome@hotmail.com" required autocomplete="email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>CNPJ da Instituição</label>
+                            <div class="input-wrapper">
+                                <i data-lucide="building"></i>
+                                <input type="text" id="otp-cnpj" placeholder="00.000.000/0000-00" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-request-otp">
+                            <span>Solicitar código de acesso</span>
+                            <i data-lucide="sparkles" class="arrow-icon-otp"></i>
+                            <i data-lucide="loader" class="spinner spinner-otp"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Passo 2 -->
+                <div id="otp-step-2" style="display:none;">
+                    <div class="success-inline">
+                        <i data-lucide="mail-check"></i>
+                        Código enviado! Verifique sua caixa de entrada.
+                    </div>
+                    <form id="otp-verify-form">
+                        <div class="form-group">
+                            <label>Código de 6 dígitos</label>
+                            <input type="text" id="otp-code" class="otp-input"
+                                placeholder="000000" maxlength="6" required autocomplete="one-time-code">
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-verify-otp">
+                            <span>Validar e entrar</span>
+                            <i data-lucide="check-circle" class="arrow-icon-verify"></i>
+                            <i data-lucide="loader" class="spinner spinner-verify"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: ADMINISTRADOR                        -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-admin" class="view" style="display:none;">
+                <button id="btn-admin-back" class="back-link">
+                    <i data-lucide="arrow-left"></i> Voltar
+                </button>
+
+                <div class="view-header">
+                    <h2>Acesso de administrador</h2>
+                    <p>Credenciais de acesso root ao sistema PDDE Control.</p>
+                </div>
+
+                <div id="admin-error" class="alert"></div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>Usuário</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="user"></i>
+                            <input type="text" id="username" placeholder="Usuário root / matriz" required autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-submit">
+                        <span>Entrar no sistema</span>
+                        <i data-lucide="arrow-right" class="arrow-icon"></i>
+                        <i data-lucide="loader" class="spinner"></i>
+                    </button>
+                </form>
+
+                <div class="divider"><span>ou via google</span></div>
+                <div class="gsi-container">
+                    <div id="gsi-button-slot-admin"></div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: NOVO VÍNCULO / CADASTRO              -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-cadastro" class="view" style="display:none;">
+                <button id="btn-cadastro-back" class="back-link">
+                    <i data-lucide="arrow-left"></i> Voltar
+                </button>
+
+                <div class="view-header">
+                    <h2 id="cadastro-title">Solicitar vínculo</h2>
+                    <p id="cadastro-subtitle">Verificamos as vagas disponíveis na sua instituição antes de criar seu acesso.</p>
+                </div>
+
+                <!-- Banner de boas-vindas (só aparece no fluxo automático) -->
+                <div id="cadastro-welcome" class="success-inline" style="display:none;">
+                    <i data-lucide="check-circle"></i>
+                    <span id="cadastro-welcome-text">Autenticação Google confirmada!</span>
+                </div>
+
+                <div id="cadastro-alert" class="alert"></div>
+
+                <form id="cadastro-form">
+                    <div class="form-group">
+                        <label>Seu nome completo</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="user"></i>
+                            <input type="text" id="cad-nome" placeholder="Como você quer ser chamado" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>CNPJ da Instituição</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="building"></i>
+                            <input type="text" id="cad-cnpj" placeholder="00.000.000/0000-00" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-validar-cnpj">
+                        <span>Verificar vagas disponíveis</span>
+                        <i data-lucide="shield-check" class="arrow-icon-cad"></i>
+                        <i data-lucide="loader" class="spinner spinner-cad"></i>
+                    </button>
+                </form>
+
+                <div id="gsi-cadastro-container" style="display:none; margin-top: 20px;">
+                    <div class="success-inline">
+                        <i data-lucide="check-circle"></i>
+                        Vagas confirmadas! Conclua o vínculo com o Google.
+                    </div>
+                    <div class="gsi-container">
+                        <div id="gsi-button-slot-cadastro"></div>
+                    </div>
+                </div>
+            </div>
 
             <div class="login-footer">
-                &copy; 2026 PDDE Control Premium. Todos os direitos reservados.
+                &copy; 2026 Kitfy Automação Premium.
+                <span style="margin: 0 6px; opacity:0.3;">·</span>
+                <button id="btn-footer-admin" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;padding:0;opacity:0.5;transition:opacity 0.2s;">Admin</button>
             </div>
         </div>
     </div>
@@ -265,52 +410,289 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         lucide.createIcons();
-        
-        const API_URL = '/api';
-        const loginForm = document.getElementById('login-form');
-        const btnSubmit = document.getElementById('btn-submit');
-        const errorAlert = document.getElementById('login-error');
-        const spinner = document.querySelector('.spinner');
-        const arrow = document.querySelector('.arrow-icon');
 
-        loginForm.onsubmit = async (e) => {
+        const API_URL = '/api';
+        let currentView = 'main';
+        let pendingGoogleCredential = null; // armazena o credential quando o operador é novo
+
+        // ── Navegação entre views ──────────────────────────────
+        function showView(name) {
+            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+            document.getElementById('view-' + name).style.display = 'block';
+            currentView = name;
+            document.querySelectorAll('.alert').forEach(a => a.style.display = 'none');
+
+            // Reseta o cadastro para o estado padrão quando navegado manualmente
+            if (name === 'cadastro' && !pendingGoogleCredential) {
+                document.getElementById('cadastro-title').innerText = 'Solicitar vínculo';
+                document.getElementById('cadastro-subtitle').innerText = 'Verificamos as vagas disponíveis na sua instituição antes de criar seu acesso.';
+                document.getElementById('cadastro-welcome').style.display = 'none';
+                document.getElementById('cad-nome').value = '';
+                document.getElementById('cad-cnpj').value = '';
+                document.getElementById('cadastro-form').style.display = 'block';
+                document.getElementById('gsi-cadastro-container').style.display = 'none';
+            }
+
+            lucide.createIcons();
+        }
+
+        // ── Redireciona após autenticação bem-sucedida ─────────
+        function redirect(user) {
+            const isAdmin = user.nivel && ['admin', 'super_admin', 'master'].includes(user.nivel.toLowerCase());
+            window.location.href = isAdmin ? 'sys-lib-v2.html' : 'index.html';
+        }
+
+        // Verifica sessão ativa (token agora é cookie HttpOnly — usa user em localStorage como indicador)
+        const _sessionUser = JSON.parse(localStorage.getItem('user') || 'null');
+        if (_sessionUser && _sessionUser.nivel) redirect(_sessionUser);
+
+        // Decodifica o payload do JWT do Google (sem verificação — só para display)
+        function decodeGoogleJwt(credential) {
+            try {
+                return JSON.parse(atob(credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            } catch (e) { return {}; }
+        }
+
+        function isCredentialExpired(credential) {
+            try {
+                const p = decodeGoogleJwt(credential);
+                return Date.now() >= p.exp * 1000;
+            } catch (e) { return true; }
+        }
+
+        // ── LOGIN COM SENHA (Admin) ────────────────────────────
+        document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
-            
             const usuario = document.getElementById('username').value;
             const senha = document.getElementById('password').value;
+            const btn = document.getElementById('btn-submit');
+            const err = document.getElementById('admin-error');
 
-            // Feedback visual
-            errorAlert.style.display = 'none';
-            btnSubmit.disabled = true;
-            spinner.style.display = 'block';
-            arrow.style.display = 'none';
+            err.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon').style.display = 'none';
 
             try {
                 const response = await axios.post(`${API_URL}/auth/login`, { usuario, senha });
-                
                 if (response.data.success) {
-                    // Guarda o token e info do usuário
-                    localStorage.setItem('token', response.data.token);
                     localStorage.setItem('user', JSON.stringify(response.data.user));
-                    
-                    // Redireciona para o Dashboard Unificado
-                    window.location.href = 'index.html';
+                    redirect(response.data.user);
                 }
             } catch (error) {
-                console.error('Erro no login:', error);
-                errorAlert.style.display = 'block';
-                errorAlert.innerText = error.response?.data?.error || 'Erro ao conectar ao servidor';
+                err.style.display = 'block';
+                err.innerText = error.response?.data?.error || 'Usuário ou senha incorretos.';
             } finally {
-                btnSubmit.disabled = false;
-                spinner.style.display = 'none';
-                arrow.style.display = 'block';
+                btn.disabled = false;
+                btn.querySelector('.spinner').style.display = 'none';
+                btn.querySelector('.arrow-icon').style.display = 'inline-block';
             }
         };
 
-        // Verifica se já está logado
-        if (localStorage.getItem('token')) {
-            window.location.href = 'index.html';
+        // ── CÓDIGO OTP ─────────────────────────────────────────
+        const otpError = document.getElementById('otp-error');
+
+        document.getElementById('otp-request-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('otp-email').value;
+            const cnpj = document.getElementById('otp-cnpj').value;
+            const btn = document.getElementById('btn-request-otp');
+
+            otpError.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner-otp').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-otp').style.display = 'none';
+
+            try {
+                const res = await axios.post(`${API_URL}/auth/request-code`, { email, cnpj });
+                if (res.data.success) {
+                    document.getElementById('otp-step-1').style.display = 'none';
+                    document.getElementById('otp-step-2').style.display = 'block';
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                otpError.style.display = 'block';
+                otpError.innerText = error.response?.data?.error || 'Erro ao gerar código de segurança.';
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-otp').style.display = 'none';
+                btn.querySelector('.arrow-icon-otp').style.display = 'inline-block';
+            }
+        };
+
+        document.getElementById('otp-verify-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('otp-email').value;
+            const cnpj = document.getElementById('otp-cnpj').value;
+            const code = document.getElementById('otp-code').value;
+            const btn = document.getElementById('btn-verify-otp');
+
+            otpError.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner-verify').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-verify').style.display = 'none';
+
+            try {
+                const res = await axios.post(`${API_URL}/auth/verify-code`, { email, cnpj, code });
+                if (res.data.success) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    redirect(res.data.user);
+                }
+            } catch (error) {
+                otpError.style.display = 'block';
+                otpError.innerText = error.response?.data?.error || 'Código incorreto ou expirado.';
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-verify').style.display = 'none';
+                btn.querySelector('.arrow-icon-verify').style.display = 'inline-block';
+            }
+        };
+
+        // ── NOVO VÍNCULO — Gatekeeper de CNPJ ─────────────────
+        const cadastroAlert = document.getElementById('cadastro-alert');
+        const gsiCadastroContainer = document.getElementById('gsi-cadastro-container');
+
+        document.getElementById('cadastro-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const cnpj = document.getElementById('cad-cnpj').value;
+            const nome = document.getElementById('cad-nome').value;
+            const btn = document.getElementById('btn-validar-cnpj');
+
+            cadastroAlert.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner-cad').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-cad').style.display = 'none';
+
+            try {
+                const response = await axios.post(`${API_URL}/auth/validar-cnpj`, { cnpj });
+
+                if (response.data.success || response.status === 200) {
+                    // Se temos um credential Google pendente e ainda válido: registra direto sem novo popup
+                    if (pendingGoogleCredential && !isCredentialExpired(pendingGoogleCredential)) {
+                        btn.querySelector('span').innerText = 'Concluindo acesso...';
+
+                        const regRes = await axios.post(`${API_URL}/auth/google`, {
+                            credential: pendingGoogleCredential,
+                            isCadastro: true,
+                            cnpj,
+                            nome
+                        });
+
+                        if (regRes.data.success) {
+                            localStorage.setItem('user', JSON.stringify(regRes.data.user));
+                            redirect(regRes.data.user);
+                            return;
+                        } else {
+                            cadastroAlert.style.display = 'block';
+                            cadastroAlert.innerText = regRes.data.error || 'Erro ao criar vínculo.';
+                        }
+                    } else {
+                        // Fluxo manual: mostra botão do Google
+                        document.getElementById('cadastro-form').style.display = 'none';
+                        gsiCadastroContainer.style.display = 'block';
+                        google.accounts.id.renderButton(
+                            document.getElementById('gsi-button-slot-cadastro'),
+                            { theme: 'filled_black', size: 'large', width: 320, logo_alignment: 'left' }
+                        );
+                        lucide.createIcons();
+                    }
+                }
+            } catch (error) {
+                cadastroAlert.style.display = 'block';
+                cadastroAlert.innerText = error.response?.data?.error || 'Empresa não encontrada ou limite de vagas excedido.';
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-cad').style.display = 'none';
+                btn.querySelector('.arrow-icon-cad').style.display = 'inline-block';
+                btn.querySelector('span').innerText = 'Verificar vagas disponíveis';
+            }
+        };
+
+        // ── GOOGLE SSO ─────────────────────────────────────────
+        window.onload = async function () {
+            if (!window.google || !google.accounts) return;
+            let clientId = null;
+            try {
+                const r = await fetch('/api/auth/config');
+                const cfg = await r.json();
+                clientId = cfg.google_client_id;
+            } catch (_) { /* Google SSO indisponível sem o Client ID */ }
+            if (!clientId) return;
+
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleGoogleResponse,
+                auto_select: false,
+                cancel_on_tap_outside: true,
+                context: "use"
+            });
+
+            const gsiOptions = { theme: 'filled_black', size: 'large', shape: 'rectangular', width: 320, logo_alignment: 'left' };
+            google.accounts.id.renderButton(document.getElementById('gsi-button-slot-login'), gsiOptions);
+            google.accounts.id.renderButton(document.getElementById('gsi-button-slot-admin'), gsiOptions);
+        };
+
+        async function handleGoogleResponse(response) {
+            const payload = { credential: response.credential };
+
+            if (currentView === 'cadastro') {
+                payload.isCadastro = true;
+                payload.cnpj = document.getElementById('cad-cnpj').value;
+                payload.nome = document.getElementById('cad-nome').value;
+            }
+
+            function showError(msg) {
+                const map = { main: 'login-error', admin: 'admin-error', cadastro: 'cadastro-alert', otp: 'otp-error' };
+                const el = document.getElementById(map[currentView] || 'login-error');
+                if (el) { el.style.display = 'block'; el.innerText = msg; }
+            }
+
+            try {
+                const res = await axios.post(`${API_URL}/auth/google`, payload);
+                if (res.data.success) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    redirect(res.data.user);
+                } else {
+                    showError(res.data.error || 'Autenticação negada pelo servidor.');
+                }
+            } catch (error) {
+                const data = error.response?.data;
+
+                // Operador novo sem CNPJ: guia automaticamente para o cadastro
+                if (data?.requiresCadastro) {
+                    pendingGoogleCredential = response.credential;
+
+                    // Pré-preenche o nome com o nome do Google
+                    const googlePayload = decodeGoogleJwt(response.credential);
+                    document.getElementById('cad-nome').value = googlePayload.name || '';
+
+                    // Adapta o cabeçalho e mostra banner de boas-vindas
+                    document.getElementById('cadastro-title').innerText = 'Quase lá!';
+                    document.getElementById('cadastro-subtitle').innerText = 'Informe o CNPJ da sua instituição para concluir o acesso.';
+
+                    const welcomeEl = document.getElementById('cadastro-welcome');
+                    const welcomeText = document.getElementById('cadastro-welcome-text');
+                    if (welcomeEl && welcomeText) {
+                        welcomeText.innerText = `Olá, ${googlePayload.given_name || googlePayload.name || 'bem-vindo'}! Autenticação Google confirmada.`;
+                        welcomeEl.style.display = 'flex';
+                    }
+
+                    showView('cadastro');
+                    return;
+                }
+
+                showError(data?.error || 'Falha na autenticação corporativa Google.');
+            }
         }
+
+        document.getElementById('btn-show-otp').addEventListener('click', () => showView('otp'));
+        document.getElementById('btn-otp-back').addEventListener('click', () => showView('main'));
+        document.getElementById('btn-admin-back').addEventListener('click', () => showView('main'));
+        document.getElementById('btn-cadastro-back').addEventListener('click', () => { showView('main'); pendingGoogleCredential = null; });
+        const btnFooterAdmin = document.getElementById('btn-footer-admin');
+        btnFooterAdmin.addEventListener('click', () => showView('admin'));
+        btnFooterAdmin.addEventListener('mouseenter', () => { btnFooterAdmin.style.opacity = '1'; });
+        btnFooterAdmin.addEventListener('mouseleave', () => { btnFooterAdmin.style.opacity = '0.5'; });
     </script>
 </body>
 </html>

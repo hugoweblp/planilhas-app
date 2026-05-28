@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minha Conta - PDDE Control</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/theme.css">
+    <script src="https://unpkg.com/lucide@0.321.0"></script>
+    <script src="assets/utils.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            padding: 60px 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .btn-voltar {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-voltar:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 28px;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .premium-table th {
+            text-align: left;
+            padding: 15px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .premium-table td {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .btn-action {
+            background: none; border: none; color: var(--text-dim);
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-action:hover { color: var(--primary); }
+
+        .badge {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>Minha Equipe</h1>
+                <p style="color: var(--text-dim); margin: 5px 0 0 0;">Configurações de acesso e licenças.</p>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <a href="index.html" class="btn-voltar">
+                    <i data-lucide="arrow-left"></i> Voltar ao Dashboard
+                </a>
+                <button id="btn-gestao-logout" class="btn-voltar" style="background: rgba(255,0,0,0.1); border-color: rgba(255,0,0,0.2); color: #ff4d4d;">
+                    <i data-lucide="log-out"></i> Encerrar Sessão
+                </button>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="section-title">
+                <i data-lucide="users" style="color: var(--primary);"></i>
+                Operadores Ativos
+                <span class="badge" id="vagas-info">--/-- Vagas</span>
+            </div>
+
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>Nome / Email</th>
+                        <th style="text-align: center;">Live Excel</th>
+                        <th style="text-align: center;">Histórico</th>
+                        <th style="text-align: center;">Remover</th>
+                    </tr>
+                </thead>
+                <tbody id="team-body">
+                    <!-- JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <p style="text-align: center; font-size: 0.8rem; color: var(--text-dim);">
+            Sua assinatura vence em: <span id="expiry-date" style="color: #fff; font-weight: 700;">--/--/----</span>
+        </p>
+    </div>
+
+    <script>
+        const _gestaoUser = JSON.parse(localStorage.getItem('user'));
+        if (!_gestaoUser) window.location.href = 'login.html';
+
+
+
+        async function init() {
+            try {
+                const user = _gestaoUser || {};
+                const resEmp = await fetch('/api/empresa/me', { credentials: 'include' });
+                const dataEmp = await resEmp.json();
+                if (dataEmp.success) {
+                    const emp = dataEmp.empresa;
+                    document.getElementById('vagas-info').textContent = `${emp.vagas_ocupadas}/${emp.plano_vagas} Vagas`;
+                    if (emp.validade_assinatura) {
+                        document.getElementById('expiry-date').textContent = new Date(emp.validade_assinatura).toLocaleDateString();
+                    }
+                }
+
+                const resEq = await fetch('/api/empresa/equipe', { credentials: 'include' });
+                const dataEq = await resEq.json();
+                if (dataEq.success) {
+                    const body = document.getElementById('team-body');
+                    body.innerHTML = dataEq.equipe.map(op => {
+                        const isMaster = op.nivel && ['master', 'super_admin', 'admin', 'gestor'].includes(op.nivel.toLowerCase());
+                        const isMe = op.id === user.id;
+                        const iniciais = escapeHtml(op.nome.substring(0, 2).toUpperCase());
+
+                        return `
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isMaster ? 'linear-gradient(135deg, var(--primary), #880000)' : 'rgba(255,255,255,0.05)'}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: #fff;">
+                                        ${iniciais}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:700; font-size:0.9rem;">${escapeHtml(op.nome)} ${isMe ? '<span style="color:var(--primary); font-size:0.6rem; margin-left:5px;">(VOCÊ)</span>' : ''}</div>
+                                        <div style="font-size:0.75rem; color:var(--text-dim);">${escapeHtml(op.email)}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                ${isMaster ? 
+                                    '<span style="color:var(--success); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Acesso Total</span>' : 
+                                    `<label class="switch">
+                                        <input type="checkbox" ${op.permissoes.live_excel ? 'checked' : ''}
+                                            data-perm-id="${op.id}" data-perm-field="live_excel">
+                                        <span class="slider"></span>
+                                    </label>`
+                                }
+                            </td>
+                            <td style="text-align: center;">
+                                ${isMaster ? 
+                                    '<span style="color:var(--success); font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Liberado</span>' : 
+                                    `<label class="switch">
+                                        <input type="checkbox" ${op.permissoes.historico ? 'checked' : ''}
+                                            data-perm-id="${op.id}" data-perm-field="historico">
+                                        <span class="slider"></span>
+                                    </label>`
+                                }
+                            </td>
+                            <td style="text-align: center;">
+                                ${!isMaster ? `
+                                    <button class="btn-action" title="Remover Operador" data-remove-id="${op.id}">
+                                        <i data-lucide="user-x" style="width:18px;"></i>
+                                    </button>
+                                ` : '<i data-lucide="shield-check" style="width:18px; color:var(--success); opacity:0.6;"></i>'}
+                            </td>
+                        </tr>
+                    `}).join('');
+                }
+                lucide.createIcons();
+            } catch (err) { console.error(err); }
+        }
+
+        async function updatePerms(id, campo, valor) {
+            await fetch(`/api/empresa/equipe/${id}/permissoes`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [campo]: valor })
+            });
+        }
+
+        async function removeOp(id) {
+            if (!confirm('Remover operador?')) return;
+            await fetch(`/api/empresa/equipe/${id}`, { method: 'DELETE', credentials: 'include' });
+            init();
+        }
+
+        document.getElementById('btn-gestao-logout').addEventListener('click', () => {
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+                .finally(() => { localStorage.clear(); window.location.href = 'login.html'; });
+        });
+
+        const teamBody = document.getElementById('team-body');
+        teamBody.addEventListener('change', e => {
+            const input = e.target.closest('input[data-perm-id]');
+            if (!input) return;
+            updatePerms(input.dataset.permId, input.dataset.permField, input.checked);
+        });
+        teamBody.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-remove-id]');
+            if (!btn) return;
+            removeOp(btn.dataset.removeId);
+        });
+
+        init();
+    </script>
+</body>
+</html>

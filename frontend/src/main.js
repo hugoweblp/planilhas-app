@@ -1,5 +1,133 @@
 const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : '/api'; // Usa o caminho relativo do servidor
 
+// Fase 4: cookie HttpOnly é a fonte de autenticação padrão
+axios.defaults.withCredentials = true;
+
+// Modo simulação: admin atuando como outra empresa injeta Bearer do s_token
+axios.interceptors.request.use(config => {
+    const simToken = localStorage.getItem('token');
+    if (localStorage.getItem('admin_token') && simToken) {
+        config.headers['Authorization'] = `Bearer ${simToken}`;
+    }
+    return config;
+});
+
+// Trava Financeira: intercepta 403 de assinatura expirada e redireciona ao login
+axios.interceptors.response.use(
+    response => response,
+    error => {
+        const data = error.response?.data;
+        if (error.response?.status === 403 && data?.assinaturaExpirada) {
+            window.showPremiumAlert?.({
+                type: 'error',
+                title: 'Assinatura Expirada',
+                message: data.error || 'Sua assinatura venceu. Entre em contato com o suporte Kitfy para renovar o acesso.',
+                confirmText: 'Entendido'
+            }).finally(() => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        }
+        return Promise.reject(error);
+    }
+);
+
+/**
+ * 👑 PREMIUM ALERT SYSTEM
+ * Substitui os alertas nativos do navegador por Modais de Alta Fidelidade
+ */
+window.showPremiumAlert = function(options) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('premium-alert-modal');
+        if (!modal) {
+            console.warn('Premium alert fallback:', options.message);
+            if (options.type === 'confirm') return resolve(confirm(options.message));
+            alert(options.message);
+            return resolve(true);
+        }
+
+        const titleEl = document.getElementById('premium-alert-title');
+        const messageEl = document.getElementById('premium-alert-message');
+        const iconEl = document.getElementById('premium-alert-icon');
+        const actionsEl = document.getElementById('premium-alert-actions');
+        const glowEl = document.getElementById('premium-alert-glow');
+
+        let config = { title: options.title || 'Aviso', icon: 'alert-triangle', color: '#f59e0b', bgGlow: 'rgba(245, 158, 11, 0.4)' };
+
+        if (options.type === 'success') {
+            config = { title: options.title || 'Sucesso', icon: 'check-circle', color: '#10b981', bgGlow: 'rgba(16, 185, 129, 0.4)' };
+        } else if (options.type === 'error') {
+            config = { title: options.title || 'Atenção Necessária', icon: 'x-octagon', color: '#ef4444', bgGlow: 'rgba(239, 68, 68, 0.4)' };
+        } else if (options.type === 'confirm') {
+            config = { title: options.title || 'Confirmação', icon: 'help-circle', color: '#3b82f6', bgGlow: 'rgba(59, 130, 246, 0.4)' };
+        }
+
+        titleEl.innerText = config.title;
+        messageEl.innerText = options.message;
+        
+        iconEl.innerHTML = `<i data-lucide="${config.icon}" style="width: 32px; height: 32px;"></i>`;
+        iconEl.style.background = `${config.color}15`;
+        iconEl.style.color = config.color;
+        iconEl.style.border = `1px solid ${config.color}30`;
+        iconEl.style.boxShadow = `0 0 20px ${config.color}20`;
+        glowEl.style.background = config.bgGlow;
+
+        actionsEl.innerHTML = '';
+        const closeModal = (result) => { modal.classList.remove('active'); resolve(result); };
+
+        if (options.type === 'confirm') {
+            const btnCancel = document.createElement('button');
+            btnCancel.className = 'btn-action';
+            btnCancel.style.cssText = 'flex: 1; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; font-weight: 600; font-family: Outfit, sans-serif;';
+            btnCancel.innerText = options.cancelText || 'Cancelar';
+            btnCancel.onclick = () => closeModal(false);
+            btnCancel.onmouseover = () => btnCancel.style.background = 'rgba(255,255,255,0.1)';
+            btnCancel.onmouseout = () => btnCancel.style.background = 'rgba(255,255,255,0.05)';
+
+            const btnConfirm = document.createElement('button');
+            btnConfirm.className = 'btn-primary';
+            btnConfirm.style.cssText = `flex: 1; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, ${config.color}, ${config.color}dd); border: none; box-shadow: 0 4px 15px ${config.color}40; cursor: pointer; font-weight: 600; font-family: Outfit, sans-serif;`;
+            btnConfirm.innerText = options.confirmText || 'Confirmar';
+            btnConfirm.onclick = () => closeModal(true);
+
+            actionsEl.appendChild(btnCancel);
+            actionsEl.appendChild(btnConfirm);
+        } else {
+            const btnOk = document.createElement('button');
+            btnOk.className = 'btn-primary';
+            btnOk.style.cssText = `width: 100%; padding: 12px; border-radius: 12px; background: linear-gradient(135deg, ${config.color}, ${config.color}dd); border: none; box-shadow: 0 4px 15px ${config.color}40; cursor: pointer; font-weight: 600; font-family: Outfit, sans-serif; letter-spacing: 0.5px;`;
+            btnOk.innerText = 'Entendido';
+            btnOk.onclick = () => closeModal(true);
+            actionsEl.appendChild(btnOk);
+        }
+
+        modal.classList.add('active');
+        if (window.lucide) window.lucide.createIcons();
+    });
+};
+
+// Sobrescreve o alert nativo silenciosamente
+window.alert = function(message) {
+    let type = 'warning';
+    let title = 'Aviso do Sistema';
+    const msgLower = String(message).toLowerCase();
+    
+    if (msgLower.includes('sucesso') || msgLower.includes('✓')) {
+        type = 'success';
+        title = 'Operação Concluída';
+        message = message.replace('✓ ', '').replace('⚠️ ', '');
+    } else if (msgLower.includes('erro') || msgLower.includes('bloqueio') || msgLower.includes('limite') || msgLower.includes('falha')) {
+        type = 'error';
+        title = 'Atenção Necessária';
+        message = message.replace('⚠️ ', '');
+    } else if (msgLower.includes('aviso') || msgLower.includes('atenção')) {
+        type = 'warning';
+        message = message.replace('⚠️ ', '');
+    }
+
+    return window.showPremiumAlert({ title, message, type });
+};
+
 let notaAtual = null; // Memória da nota em edição
 let loteAtual = []; // Notas do upload atual (Carrossel)
 let indexLote = 0;   // Posição no lote
@@ -7,6 +135,7 @@ let historicoCompleto = []; // Cache do histórico para filtros rápidos
 let chartVolume = null;
 let chartStatus = null;
 let pollingInterval = null; // Para monitorar assinatura em tempo real
+let escolasCache = []; // Cache para busca instantânea
 
 // Função Utilitária para Animação de Números (Count Up)
 function animateValue(id, start, end, duration, isCurrency = false) {
@@ -71,12 +200,65 @@ function pararConsoleScanner() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🛡️ PROTEÇÃO DE ROTA: Verifica se o usuário está logado
-    const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
 
-    if (!token) {
+    if (!user) {
         window.location.href = 'login.html';
         return;
+    }
+
+    // 🛡️ TRAVA E SIMULAÇÃO DE ADMIN
+    const adminToken = localStorage.getItem('admin_token');
+    const adminUser = adminToken ? JSON.parse(localStorage.getItem('admin_user')) : null;
+
+    // Se temos um admin_token no localStorage, significa que estamos no modo de simulação.
+    const originalUser = adminUser || user;
+    const isOriginalAdmin = originalUser && ['admin', 'super_admin', 'master'].includes(originalUser.nivel?.toLowerCase());
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const cnpjTarget = urlParams.get('simular');
+
+    if (cnpjTarget) {
+        if (isOriginalAdmin) {
+            // Backup dos dados do Admin original (se ainda não tiver backup)
+            if (!localStorage.getItem('admin_token')) {
+                localStorage.setItem('admin_token', 'simulating');
+                localStorage.setItem('admin_user', JSON.stringify(user));
+            }
+
+            // Autenticação via cookie HttpOnly — sem header manual
+            axios.post('/api/internal/debug-account', { id_target: cnpjTarget })
+            .then(res => {
+                if (res.data && res.data.s_token) {
+                    localStorage.setItem('token', res.data.s_token);
+                    localStorage.setItem('user', JSON.stringify(res.data.u_meta || { nivel: 'operador', nome: 'Admin Simulado' }));
+                    
+                    // Limpar query string
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Recarregar para assumir a nova empresa
+                    window.location.reload();
+                } else {
+                    window.alert('⚠️ Erro ao obter tokens de simulação.');
+                    window.location.href = 'sys-lib-v2.html';
+                }
+            })
+            .catch(err => {
+                console.error('Erro na simulação:', err);
+                window.alert('⚠️ Falha ao se conectar com a simulação: ' + (err.response?.data?.error || err.message));
+                window.location.href = 'sys-lib-v2.html';
+            });
+            return; // Interrompe carregamento enquanto faz redirecionamento
+        } else {
+            window.location.href = 'login.html';
+            return;
+        }
+    } else {
+        // Se for admin e NÃO estiver no modo de simulação, redireciona para a Sala Central
+        if (isOriginalAdmin && !adminToken) {
+            window.location.href = 'sys-lib-v2.html';
+            return;
+        }
     }
 
     // Personaliza a barra lateral com os dados do usuário
@@ -85,16 +267,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatarEl = document.querySelector('.avatar');
         const userplanEl = document.querySelector('.userplan');
 
-        if (usernameEl) usernameEl.innerText = user.nome;
-        if (avatarEl) avatarEl.innerText = user.nome.substring(0, 2).toUpperCase();
-        if (userplanEl) userplanEl.innerText = user.nivel === 'admin' ? 'Administrador' : 'Operador';
+        if (usernameEl) usernameEl.innerText = user.nome || 'Kitfy User';
+        if (avatarEl) avatarEl.innerText = String(user.nome || 'KI').substring(0, 2).toUpperCase();
+        if (userplanEl) userplanEl.innerText = (user.nivel === 'admin' || user.nivel === 'super_admin') ? 'Administrador' : 'Operador';
+        
+        // --- FASE 3: Liberação do Menu da Equipe (RBAC) ---
+        if (user.nivel === 'gestor' || user.nivel === 'admin' || user.nivel === 'super_admin') {
+            const navEquipe = document.getElementById('nav-equipe');
+            const equipeDiv = document.getElementById('equipe-divider');
+            if (navEquipe) navEquipe.style.display = 'flex';
+            if (equipeDiv) equipeDiv.style.display = 'block';
+        }
+
+
     }
 
     // Lógica de Logout
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-        btnLogout.onclick = () => {
-            if (confirm('Deseja realmente sair do sistema?')) {
+        btnLogout.onclick = async () => {
+            const res = await window.showPremiumAlert({
+                type: 'confirm',
+                title: 'Desconectar',
+                message: 'Deseja realmente sair do sistema e encerrar sua sessão?',
+                confirmText: 'Sim, Sair',
+                cancelText: 'Cancelar'
+            });
+            if (res) {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
                 localStorage.clear();
                 window.location.href = '/login.html';
             }
@@ -161,7 +361,8 @@ function inicializarNavegacao() {
         'nav-novo': { t: 'Novo Processamento', s: 'Suba seus arquivos XML para gerar o kit.' },
         'nav-historico': { t: 'Histórico Completo', s: 'Consulte todos os processos gerados.' },
         'nav-escolas': { t: 'Escolas Atendidas', s: 'Gestão de endereços e dados das entidades.' },
-        'nav-config': { t: 'Configurações', s: 'Ajustes globais do sistema.' }
+        'nav-config': { t: 'Configurações', s: 'Ajustes globais do sistema.' },
+        'nav-equipe': { t: 'Minha Equipe', s: 'Gestão de permissões e acessos dos operadores.' }
     };
 
     navItems.forEach(item => {
@@ -201,6 +402,10 @@ function inicializarNavegacao() {
                 carregarHistorico();
             }
 
+            if (id === 'nav-equipe') {
+                carregarEquipe();
+            }
+
             // Salva o estado da navegação
             localStorage.setItem('lastView', id);
         };
@@ -215,20 +420,13 @@ function inicializarNavegacao() {
 
 async function carregarEscolas() {
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('❌ Token não encontrado. Redirecionando...');
-            return;
-        }
-
-        const response = await axios.get(`${API_URL}/schools`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await axios.get(`${API_URL}/schools`);
         
         console.log('🏛️ Resposta da API Escolas:', response.data);
         
         if (response.data.success) {
-            renderizarTabelaEscolas(response.data.schools);
+            escolasCache = response.data.schools;
+            renderizarGridEscolas(escolasCache);
         }
     } catch (error) {
         console.error('❌ Erro crítico ao carregar escolas:', error.response ? error.response.status : error.message);
@@ -240,11 +438,7 @@ async function carregarEscolas() {
  */
 async function abrirEdicaoEscolaManual(cnpj) {
     try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/schools`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
+        const response = await axios.get(`${API_URL}/schools`);
         const school = response.data.schools.find(s => s.cnpj === cnpj);
         if (school) {
             abrirModalCadastroEscola(school, null);
@@ -254,58 +448,83 @@ async function abrirEdicaoEscolaManual(cnpj) {
     }
 }
 
-function renderizarTabelaEscolas(schools) {
-    const tableBody = document.getElementById('escolas-body');
-    if (!tableBody) return;
+/**
+ * Filtro em tempo real para o diretório de escolas
+ */
+window.filtrarEscolas = (termo) => {
+    const termoLower = termo.toLowerCase();
+    const filtradas = escolasCache.filter(s => 
+        (s.razao_social || '').toLowerCase().includes(termoLower) ||
+        (s.cnpj || '').toString().includes(termoLower)
+    );
+    renderizarGridEscolas(filtradas);
+};
+
+function renderizarGridEscolas(schools) {
+    const grid = document.getElementById('escolas-grid');
+    if (!grid) return;
 
     try {
+        // Card de "Adicionar Nova" (Sempre presente no início)
+        let html = `
+            <div class="card tilt-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; border: 2px dashed rgba(255,255,255,0.1); background: rgba(255,255,255,0.01); cursor: pointer; transition: 0.3s;" onclick="abrirModalNovaEscola()">
+                <div style="background: rgba(255,255,255,0.05); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <i data-lucide="plus" style="width: 30px; color: var(--text-dim);"></i>
+                </div>
+                <p style="font-size: 0.9rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Nova Unidade</p>
+            </div>
+        `;
+
         if (!Array.isArray(schools) || schools.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #94a3b8;">Nenhuma escola cadastrada ainda.</td></tr>';
+            if (escolasCache.length > 0) { // Se tem cache mas o filtro zerou
+                grid.innerHTML = html + '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-dim);">Nenhuma escola encontrada com este termo.</div>';
+            } else {
+                grid.innerHTML = html;
+            }
+            if (window.lucide) window.lucide.createIcons();
             return;
         }
 
-        tableBody.innerHTML = schools.map(school => {
-            // Extração segura de variáveis
-            const razaoSocial = school.razao_social || 'Escola sem nome';
-            const municipio = school.municipio || '---';
-            const uf = school.uf || '--';
+        html += schools.map(school => {
+            const nome = school.razao_social || 'Escola sem nome';
+            const iniciais = nome.substring(0, 2).toUpperCase();
+            const municipio = school.municipio || 'Santarém';
+            const uf = school.uf || 'PA';
             
-            // Tratamento blindado para o CNPJ (pode vir como número do SQLite ou nulo)
-            let cnpjRaw = school.cnpj ? String(school.cnpj) : '';
-            let cnpjFormatado = 'CNPJ Inválido/Vazio';
-            
-            if (cnpjRaw) {
-                // Se o CNPJ tiver 13 dígitos (perdeu o zero à esquerda), adiciona o 0
-                if (cnpjRaw.length === 13) cnpjRaw = '0' + cnpjRaw;
-                
-                // Aplica a máscara apenas se tiver os 14 dígitos
-                if (cnpjRaw.length === 14) {
-                    cnpjFormatado = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
-                } else {
-                    cnpjFormatado = cnpjRaw; // Mostra como está se for muito exótico
-                }
-            }
+            // Máscara de CNPJ
+            let cnpjRaw = school.cnpj ? String(school.cnpj).padStart(14, '0') : '';
+            let cnpjFormatado = cnpjRaw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 
             return `
-                <tr onclick="window.verNotasDaEscola('${school.cnpj || ''}')" style="cursor: pointer;">
-                    <td>
-                        <div style="font-weight: 600; color: #f8fafc;">${razaoSocial}</div>
-                    </td>
-                    <td style="font-family: monospace; color: var(--accent-primary);">${cnpjFormatado}</td>
-                    <td style="color: #94a3b8;">${municipio} - ${uf}</td>
-                    <td style="display: flex; gap: 8px;">
-                        <button class="btn-icon" title="Ver Notas desta Escola" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">
-                            <i data-lucide="list"></i>
-                        </button>
-                    </td>
-                </tr>
+                <div class="card stat-card tilt-card" onclick="window.verNotasDaEscola('${school.cnpj}')" style="flex-direction: column; align-items: flex-start; padding: 30px; min-height: 220px; gap: 0;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px;">
+                        <div style="background: var(--primary); color: #fff; width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(255,0,0,0.2);">
+                            ${iniciais}
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 50px; font-size: 0.65rem; font-weight: 800; color: var(--text-dim); display: flex; align-items: center; gap: 5px; height: fit-content;">
+                            <i data-lucide="map-pin" style="width: 10px;"></i> ${municipio}-${uf}
+                        </div>
+                    </div>
+                    
+                    <h3 style="font-size: 1rem; margin: 0 0 8px 0; line-height: 1.3; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.6em;">
+                        ${nome.toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                    </h3>
+                    
+                    <p style="font-family: monospace; color: var(--primary); font-size: 0.8rem; margin-bottom: 20px; font-weight: 600;">${cnpjFormatado}</p>
+                    
+                    <div style="width: 100%; height: 1px; background: linear-gradient(90deg, var(--border), transparent); margin-bottom: 20px;"></div>
+                    
+                    <button class="btn-primary" style="width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; padding: 10px; box-shadow: none;">
+                        Acessar Pasta da Unidade <i data-lucide="chevron-right" style="width: 14px; margin-left: 5px;"></i>
+                    </button>
+                </div>
             `;
         }).join('');
         
+        grid.innerHTML = html;
         if (window.lucide) window.lucide.createIcons();
     } catch (err) {
-        console.error('❌ Erro fatal ao renderizar tabela de escolas:', err);
-        tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #ef4444; font-weight: bold;">Erro de Exibição: ${err.message}</td></tr>`;
+        console.error('❌ Erro ao renderizar grid de escolas:', err);
     }
 }
 
@@ -321,12 +540,10 @@ window.verNotasDaEscola = async (cnpj) => {
     const cleanCnpj = String(cnpj).replace(/\D/g, '').padStart(14, '0');
     
     try {
-        const token = localStorage.getItem('token');
-        
         // Busca os dados reais da escola no Backend
         const [historyRes, statsRes] = await Promise.all([
-            axios.get(`${API_URL}/history/${cleanCnpj}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-            axios.get(`${API_URL}/stats/escola/${cleanCnpj}`, { headers: { 'Authorization': `Bearer ${token}` } })
+            axios.get(`${API_URL}/history/${cleanCnpj}`),
+            axios.get(`${API_URL}/stats/escola/${cleanCnpj}`)
         ]);
 
         if (historyRes.data.success) {
@@ -457,12 +674,23 @@ window.baixarLoteSelecionado = async () => {
     const temPendentes = notasStatus.some(s => s === 'PENDENTE' || s === 'REENTREGAR');
 
     if (!temPendentes) {
-        // Todas estão ASSINADAS, baixa o ZIP do lote direto
-        const token = localStorage.getItem('token');
-        const downloadUrl = `${API_URL}/download-bulk?chaves=${selectedChaves.join(',')}&token=${token}`;
-        
-        // Dispara o download em uma nova aba
-        window.open(downloadUrl, '_blank');
+        // Todas estão ASSINADAS — POST para evitar chaves de NF-e em logs de acesso
+        const resp = await fetch(`${API_URL}/download-bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ chaves: selectedChaves })
+        });
+        if (!resp.ok) { const msg = await resp.text(); return showNotification(msg || 'Erro no download.', 'error'); }
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `LOTE_PDDE_${Date.now()}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
         
         // Atualiza os dados da escola na tela após um curtíssimo delay para o DB processar
         setTimeout(() => {
@@ -493,10 +721,7 @@ window.baixarLoteSelecionado = async () => {
 
 async function carregarHistorico() {
     try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/history`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await axios.get(`${API_URL}/history`);
         
         if (response.data.success) {
             console.log('📜 Histórico carregado:', response.data.history.length);
@@ -813,14 +1038,9 @@ async function handleFiles(files) {
     });
 
     try {
-        const token = localStorage.getItem('token');
-        
         const startTime = Date.now();
         const response = await axios.post(`${API_URL}/upload`, formData, {
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data'
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
         
         // Garante que o Scanner de Luxo apareça por pelo menos 4 segundos
@@ -888,13 +1108,19 @@ function abrirModalConfirmacaoEscola(school, nota) {
     modal.classList.add('active');
 
     // Botão: Prosseguir para as Planilhas
-    document.getElementById('btn-proceed-to-edit').onclick = () => {
+    document.getElementById('btn-proceed-to-edit').onclick = async () => {
         modal.classList.remove('active');
         
         // Verifica duplicidade antes de abrir o editor
         if (nota.isDuplicada) {
-            const msg = `⚠️ NOTA DUPLICADA\n\nA NF nº ${nota.nota.numero} já existe no histórico.\n\nDeseja abrir para edição e gerar novos arquivos mesmo assim?`;
-            if (!confirm(msg)) return;
+            const res = await window.showPremiumAlert({
+                type: 'warning',
+                title: 'Nota Duplicada no Histórico',
+                message: `A NF nº ${nota.nota.numero} já existe no sistema.\n\nDeseja abrir para edição e gerar novos arquivos mesmo assim?`,
+                confirmText: 'Sim, Prosseguir',
+                cancelText: 'Cancelar'
+            });
+            if (!res) return;
         }
         
         abrirModalEdicao(nota);
@@ -944,7 +1170,6 @@ function abrirModalCadastroEscola(schoolData = null, originalFiles = null) {
     // Botão Salvar e Continuar
     document.getElementById('btn-save-school').onclick = async () => {
         try {
-            const token = localStorage.getItem('token');
             const data = {
                 cnpj: document.getElementById('new-school-cnpj').value,
                 razao_social: document.getElementById('new-school-razao_social').value,
@@ -953,9 +1178,7 @@ function abrirModalCadastroEscola(schoolData = null, originalFiles = null) {
                 uf: document.getElementById('new-school-uf').value
             };
 
-            await axios.post(`${API_URL}/schools`, data, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            await axios.post(`${API_URL}/schools`, data);
 
             modal.classList.remove('active');
             
@@ -1003,38 +1226,25 @@ function configurarModal() {
         navegarLote(1);
     };
 
-    // Lógica das Setinhas
-    const setupGlobalInput = (id, base) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        let lastVal = 0;
-        input.onfocus = () => { lastVal = parseFloat(input.value); };
-        input.oninput = (e) => {
-            const current = parseFloat(e.target.value);
-            if (isNaN(current)) return;
-            const delta = current > lastVal ? 1 : -1;
-
-            // TRAVA GLOBAL: Se estiver diminuindo, verifica se alguém já chegou em 0%
-            if (delta === -1) {
-                const limiteAtingido = notaAtual.produtos.some(p => p.percentuais[base] <= 0);
-                if (limiteAtingido) {
-                    alert('⚠️ LIMITE ATINGIDO: Não é possível diminuir mais, pois alguns itens já estão no valor original da Base 01.');
-                    atualizarTotaisNoRodape(); // Volta o número do input para o valor real
-                    return;
-                }
+    // Lógica de Rateio Global Blindada (Substitui setinhas nativas bugadas)
+    window.ajustarMassa = (base, delta) => {
+        if (!notaAtual) return;
+        
+        // TRAVA GLOBAL: Se estiver diminuindo, verifica se alguém já chegou em 0%
+        if (delta === -1) {
+            const limiteAtingido = notaAtual.produtos.some(p => (p.percentuais[base] || 0) <= 0);
+            if (limiteAtingido) {
+                alert('⚠️ LIMITE ATINGIDO: Não é possível diminuir mais, pois alguns itens já estão no valor original da Base 01.');
+                return;
             }
+        }
 
-            notaAtual.produtos.forEach((_, index) => {
-                const novoPerc = (notaAtual.produtos[index].percentuais[base] || 0) + delta;
-                window.updatePrice(index, base, novoPerc);
-            });
-            lastVal = current;
-            renderizarItensEdicao();
-        };
+        notaAtual.produtos.forEach((_, index) => {
+            const novoPerc = (notaAtual.produtos[index].percentuais[base] || 0) + delta;
+            window.updatePrice(index, base, novoPerc);
+        });
+        renderizarItensEdicao();
     };
-
-    setupGlobalInput('global-total-p2', 'p2');
-    setupGlobalInput('global-total-p3', 'p3');
 
     if (btnFinalize) {
         btnFinalize.onclick = () => {
@@ -1240,9 +1450,19 @@ function abrirModalEdicao(nota) {
 
         const cacheAntigo = cache.filter(v => !novas.includes(v));
 
+        const rect = container.getBoundingClientRect();
+
         const picker = document.createElement('div');
         picker.id = 'ia-picker';
         picker.className = 'ia-picker';
+        
+        // Ejetando do DOM local para não sofrer clipping (Portal)
+        picker.style.position = 'fixed';
+        picker.style.top = `${rect.bottom + 8}px`;
+        picker.style.left = `${rect.left}px`;
+        picker.style.width = `${rect.width}px`;
+        picker.style.zIndex = '9999999';
+
         picker.innerHTML = `
             <div class="ia-picker-header">
                 <span>✨ Escolha uma variação</span>
@@ -1262,10 +1482,12 @@ function abrirModalEdicao(nota) {
             });
         });
 
-        container.appendChild(picker);
+        document.body.appendChild(picker);
 
         setTimeout(() => {
             document.addEventListener('click', clickForaPicker);
+            // Proteção para o dropdown não flutuar caso o usuário role a tela do modal
+            document.querySelector('.modal-content')?.addEventListener('scroll', fecharPicker, { once: true, capture: true });
         }, 0);
     }
 
@@ -1302,22 +1524,68 @@ function abrirModalEdicao(nota) {
 
 function renderizarItensEdicao() {
     const editTableBody = document.getElementById('edit-table-body');
-    editTableBody.innerHTML = notaAtual.produtos.map((prod, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${prod.descricao}</td>
-            <td>${prod.quantidade}</td>
-            <td>R$ ${prod.precos.p1.toFixed(2)}</td>
-            <td>
-                <input type="number" class="edit-input p2" value="${Math.round(prod.percentuais.p2)}" onchange="window.updatePrice(${index}, 'p2', this.value)">
-                <span id="price-${index}-p2" class="price-tag">R$ ${prod.precos.p2.toFixed(2)}</span>
-            </td>
-            <td>
-                <input type="number" class="edit-input p3" value="${Math.round(prod.percentuais.p3)}" onchange="window.updatePrice(${index}, 'p3', this.value)">
-                <span id="price-${index}-p3" class="price-tag">R$ ${prod.precos.p3.toFixed(2)}</span>
-            </td>
-        </tr>
-    `).join('');
+    if (!editTableBody) return;
+
+    editTableBody.innerHTML = notaAtual.produtos.map((prod, index) => {
+        const p1 = (prod.precos.p1 || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const p2 = (prod.precos.p2 || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const p3 = (prod.precos.p3 || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const perc2 = Math.round(prod.percentuais.p2 || 0);
+        const perc3 = Math.round(prod.percentuais.p3 || 0);
+
+        return `
+            <tr style="background: rgba(255,255,255,0.01); transition: 0.3s; border-radius: 12px; margin-bottom: 10px;">
+                <td style="padding: 20px 15px; border-radius: 12px 0 0 12px; color: var(--text-dim); font-size: 0.75rem; font-family: monospace;">${String(index + 1).padStart(2, '0')}</td>
+                <td style="padding: 20px 15px;">
+                    <div style="font-weight: 700; color: #fff; font-size: 0.9rem; letter-spacing: -0.3px;">${prod.descricao}</div>
+                </td>
+                <td style="padding: 20px 15px; text-align: center;">
+                    <span style="background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-dim);">${prod.quantidade}</span>
+                </td>
+                <td style="padding: 20px 15px; text-align: right;">
+                    <div style="display: inline-flex; align-items: center; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.1); padding: 8px 12px; border-radius: 10px; color: #22c55e; font-weight: 800; font-family: 'Outfit'; font-size: 0.85rem;">
+                        <span style="font-size: 0.65rem; margin-right: 5px; opacity: 0.7;">R$</span> ${p1}
+                    </div>
+                </td>
+                
+                <!-- Ajuste Base 02 -->
+                <td style="padding: 20px 15px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 10px; border: 1px solid var(--border);">
+                            <input type="number" 
+                                class="edit-input-micro" 
+                                value="${perc2}" 
+                                onchange="window.updatePrice(${index}, 'p2', this.value)"
+                                style="width: 45px; background: transparent; border: none; color: #fff; text-align: center; font-weight: 800; font-size: 0.85rem; outline: none;">
+                            <span style="font-size: 0.65rem; color: var(--text-dim); margin-right: 5px;">%</span>
+                        </div>
+                        <div style="font-family: monospace; font-size: 0.75rem; color: #fff; background: #000; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); min-width: 80px; text-align: center;">
+                           <span style="opacity: 0.4;">R$</span> ${p2}
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Ajuste Base 03 -->
+                <td style="padding: 20px 15px; border-radius: 0 12px 12px 0;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 10px; border: 1px solid var(--border);">
+                            <input type="number" 
+                                class="edit-input-micro" 
+                                value="${perc3}" 
+                                onchange="window.updatePrice(${index}, 'p3', this.value)"
+                                style="width: 45px; background: transparent; border: none; color: #fff; text-align: center; font-weight: 800; font-size: 0.85rem; outline: none;">
+                            <span style="font-size: 0.65rem; color: var(--text-dim); margin-right: 5px;">%</span>
+                        </div>
+                        <div style="font-family: monospace; font-size: 0.75rem; color: #fff; background: #000; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); min-width: 80px; text-align: center;">
+                           <span style="opacity: 0.4;">R$</span> ${p3}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
     atualizarTotaisNoRodape();
 }
 
@@ -1325,8 +1593,10 @@ function atualizarTotaisNoRodape() {
     if (!notaAtual) return;
     const totalP2 = notaAtual.produtos.reduce((acc, p) => acc + (p.precos.p2 * p.quantidade), 0);
     const totalP3 = notaAtual.produtos.reduce((acc, p) => acc + (p.precos.p3 * p.quantidade), 0);
-    document.getElementById('global-total-p2').value = totalP2.toFixed(2);
-    document.getElementById('global-total-p3').value = totalP3.toFixed(2);
+    const elP2 = document.getElementById('global-total-p2');
+    const elP3 = document.getElementById('global-total-p3');
+    if (elP2) elP2.value = `R$ ${totalP2.toFixed(2)}`;
+    if (elP3) elP3.value = `R$ ${totalP3.toFixed(2)}`;
 }
 
 window.updatePrice = (index, base, novoPercentual) => {
@@ -1391,12 +1661,16 @@ window.updatePrice = (index, base, novoPercentual) => {
  * Marca uma nota como assinada/concluída
  */
 window.assinarNota = async (id) => {
-    if (!confirm('Deseja marcar esta nota como ASSINADA e CONCLUÍDA?')) return;
+    const res = await window.showPremiumAlert({
+        type: 'confirm',
+        title: 'Confirmação de Assinatura',
+        message: 'Deseja marcar esta nota como ASSINADA e CONCLUÍDA?\nOs arquivos serão validados como entregues.',
+        confirmText: 'Sim, Concluir',
+        cancelText: 'Cancelar'
+    });
+    if (!res) return;
     try {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(`${API_URL}/notas/sign/${id}`, {}, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await axios.post(`${API_URL}/notas/sign/${id}`, {});
         
         if (response.data.success) {
             alert('✓ Nota assinada com sucesso!');
@@ -1428,11 +1702,9 @@ window.baixarKit = async (id, status) => {
         return;
     }
     
-    // Tenta baixar a nota
-    const token = localStorage.getItem('token');
-    
+    // Tenta baixar a nota — cookie HttpOnly autentica automaticamente
     try {
-        const response = await axios.get(`${API_URL}/download/${id}?token=${token}`, { responseType: 'blob' });
+        const response = await axios.get(`${API_URL}/download/${id}`, { responseType: 'blob' });
         const url = window.URL.createObjectURL(new Blob([response.data]));
         const link = document.createElement('a');
         link.href = url;
@@ -1442,9 +1714,7 @@ window.baixarKit = async (id, status) => {
         link.parentNode.removeChild(link);
 
         // Incrementar contador de impressões no servidor
-        await axios.post(`${API_URL}/notas/track-print/${id}`, {}, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await axios.post(`${API_URL}/notas/track-print/${id}`, {});
         
         // Recarregar para atualizar o contador visual (I: x)
         carregarHistorico();
@@ -1460,10 +1730,7 @@ window.baixarKit = async (id, status) => {
 
 window.verHistoricoAssinaturas = async (id) => {
     try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/notas/${id}/entregas`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await axios.get(`${API_URL}/notas/${id}/entregas`);
         if (response.data.success) {
             const tbody = document.getElementById('signature-history-body');
             const entregas = response.data.entregas;
@@ -1477,7 +1744,7 @@ window.verHistoricoAssinaturas = async (id) => {
                         </td>
                         <td style="font-weight: 600;">${e.recebido_por || 'N/A'}</td>
                         <td style="text-align: center;">
-                            ${e.signature_path ? `<a href="/output/assinaturas/${e.signature_path}" target="_blank" style="color: var(--primary); text-decoration: none;"><i data-lucide="image"></i> Ver</a>` : '-'}
+                            ${e.signature_path ? `<button onclick="viewSignature('${e.signature_path}')" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:inherit;padding:0;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="image"></i> Ver</button>` : '-'}
                         </td>
                     </tr>
                 `).join('');
@@ -1488,6 +1755,19 @@ window.verHistoricoAssinaturas = async (id) => {
     } catch (e) {
         console.error(e);
         alert('Erro ao carregar histórico de entregas.');
+    }
+};
+
+window.viewSignature = async function(sigPath) {
+    try {
+        const response = await axios.get(`/output/assinaturas/${encodeURIComponent(sigPath)}`, {
+            responseType: 'blob'
+        });
+        const blobUrl = URL.createObjectURL(response.data);
+        const win = window.open(blobUrl, '_blank');
+        if (win) win.onload = () => URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+        alert('Não foi possível carregar a imagem da assinatura.');
     }
 };
 
@@ -1514,16 +1794,13 @@ window.enviarSolicitacaoAssinatura = async () => {
         btn.innerText = 'Enviando...';
         btn.disabled = true;
 
-        const token = localStorage.getItem('token');
         const isBulk = modal.dataset.isBulk === 'true';
         const endpoint = isBulk ? 'request-signature-bulk' : 'request-signature';
-        
+
         const payload = { ...data };
         if (isBulk) payload.chaves = id.split(',');
 
-        const response = await axios.post(`${API_URL}/notas/${endpoint}${isBulk ? '' : '/' + id}`, payload, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await axios.post(`${API_URL}/notas/${endpoint}${isBulk ? '' : '/' + id}`, payload);
 
         if (response.data.success) {
             const link = response.data.link;
@@ -1575,10 +1852,7 @@ function iniciarPollingAssinatura(id) {
 
     pollingInterval = setInterval(async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${API_URL}/nota-status/${id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await axios.get(`${API_URL}/nota-status/${id}`);
 
             if (response.data.success && response.data.status === 'ASSINADO') {
                 clearInterval(pollingInterval);
@@ -1599,7 +1873,144 @@ function iniciarPollingAssinatura(id) {
                 }
             }
         } catch (error) {
-            console.error('Erro no polling:', error);
+            console.error('Erro ao polling:', error);
         }
     }, 3000); // Verifica a cada 3 segundos
 }
+
+
+
+// --- FASE 3: FUNÇÕES DE GESTÃO DA EQUIPE (RBAC B2B) ---
+window.equipeConectada = [];
+
+window.carregarEquipe = async function() {
+    const tbody = document.getElementById('tbody-equipe');
+    const contador = document.getElementById('equipe-count');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Carregando equipe...</td></tr>';
+
+    try {
+        const response = await axios.get(`${API_URL}/equipe`);
+
+        if (response.data.success) {
+            window.equipeConectada = response.data.equipe || [];
+            if (contador) contador.innerText = window.equipeConectada.length;
+            renderizarTabelaEquipe();
+        }
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ff0000;">Erro ao buscar equipe: ${error.response?.data?.error || error.message}</td></tr>`;
+    }
+};
+
+function renderizarTabelaEquipe() {
+    const tbody = document.getElementById('tbody-equipe');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    if (window.equipeConectada.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Nenhum operador atrelado a este CNPJ.</td></tr>';
+        return;
+    }
+
+    window.equipeConectada.forEach(op => {
+        const tr = document.createElement('tr');
+        const perms = op.permissoesObj || { live_excel: true, historico: true };
+        const isSelfGestor = op.email === currentUser.email && op.nivel === 'gestor';
+
+        let badgeNivel = `<span class="status-badge status-pendente" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2);">Operador</span>`;
+        if (op.nivel === 'gestor' || op.nivel === 'admin') {
+            badgeNivel = `<span class="status-badge status-assinado" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border-color: rgba(34, 197, 94, 0.2);">Gestor Master</span>`;
+        }
+
+        tr.innerHTML = `
+            <td>
+                <div style="font-weight: 800; color: #fff; font-family: 'Outfit', sans-serif;">${op.nome}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">${op.email}</div>
+            </td>
+            <td>${badgeNivel}</td>
+            <td>
+                <label class="rbac-switch">
+                    <input type="checkbox" ${perms.live_excel ? 'checked' : ''} ${isSelfGestor ? 'disabled title="Segurança: Impossível desabilitar o próprio acesso mestre"' : ''} onclick="window.togglePermissao(${op.id}, 'live_excel', this.checked)">
+                    <span class="rbac-slider"></span>
+                </label>
+            </td>
+            <td>
+                <label class="rbac-switch">
+                    <input type="checkbox" ${perms.historico ? 'checked' : ''} ${isSelfGestor ? 'disabled title="Segurança: Impossível desabilitar o próprio acesso mestre"' : ''} onclick="window.togglePermissao(${op.id}, 'historico', this.checked)">
+                    <span class="rbac-slider"></span>
+                </label>
+            </td>
+            <td style="text-align: right;">
+                <button class="btn-action" style="margin-left: auto; width: 36px; height: 36px; ${op.email === currentUser.email ? 'opacity: 0.3; cursor: not-allowed;' : ''}" ${op.email === currentUser.email ? 'disabled title="Segurança: Você não pode desconectar sua própria conta master"' : ''} onclick="window.demitirOperador(${op.id}, '${op.nome.replace(/'/g, "\\'")}')">
+                    <i data-lucide="user-x" style="width: 16px;"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+window.togglePermissao = async function(id, key, value) {
+    const op = window.equipeConectada.find(u => u.id === id);
+    if (!op) return;
+
+    if (!op.permissoesObj) op.permissoesObj = { live_excel: true, historico: true };
+    op.permissoesObj[key] = value;
+
+    try {
+        await axios.put(`${API_URL}/equipe/${id}/permissoes`, {
+            permissoes: op.permissoesObj
+        });
+        
+        if (window.showGhostNotification) {
+            window.showGhostNotification(`Permissão de ${key === 'live_excel' ? 'Live Excel' : 'Histórico'} ${value ? 'ativada' : 'cortada'}!`);
+        }
+    } catch (error) {
+        window.alert(`⚠️ Falha ao salvar permissão: ${error.response?.data?.error || error.message}`);
+        window.carregarEquipe(); 
+    }
+};
+
+window.demitirOperador = async function(id, nome) {
+    const res = await window.showPremiumAlert({
+        type: 'confirm',
+        title: 'Revogar Acesso',
+        message: `Atenção: Desconectar a conta de "${nome}" revogará instantaneamente seu acesso e liberará a vaga para que você cadastre outra pessoa.\n\nConfirma o encerramento do vínculo?`,
+        confirmText: 'Sim, Revogar Acesso',
+        cancelText: 'Manter Conta'
+    });
+
+    if (!res) return;
+
+    try {
+        const response = await axios.delete(`${API_URL}/equipe/${id}`);
+
+        if (response.data.success) {
+            window.alert(`✓ ${response.data.message}`);
+            window.carregarEquipe();
+        }
+    } catch (error) {
+        window.alert(`⚠️ Falha ao revogar acesso: ${error.response?.data?.error || error.message}`);
+    }
+};
+
+window.encerrarSimulacao = function() {
+    const adminUser = localStorage.getItem('admin_user');
+    if (adminUser) {
+        localStorage.setItem('user', adminUser);
+        localStorage.removeItem('token');
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        window.location.href = 'sys-lib-v2.html';
+    } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    }
+};
+

@@ -24,3 +24,25 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Scripts de debug e manutenção de banco (nunca subir para o repo)
+scratch/
+debug_db.js
+fix-db.js
+wipe_db.js
+force_init_db.js
+migrar-fase1.js
+create-db.js
+reset-db.js
+
+# Backup de banco gerado localmente
+*.sql
+backup_mysql/
+
+# Scripts de teste local
+test-upload.js
+test_mysql.js
+
+# Documentos internos de auditoria e estudo
+AUDITORIA_COMPLETA.md
+estudo_arquitetura_sso.md

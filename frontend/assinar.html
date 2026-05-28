@@ -5,23 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Assinatura Digital - PDDE Control Premium</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/theme.css">
     <style>
         :root {
-            --primary: #ff0000;
-            --bg: #030000;
-            --card: #0a0000;
-            --text: #ffffff;
-            --text-dim: #94a3b8;
-            --border: rgba(255, 0, 0, 0.2);
+            --card: rgba(255, 255, 255, 0.032);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: 'Manrope', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -46,7 +40,7 @@
             font-size: 1.8rem;
             font-weight: 800;
             color: var(--primary);
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            text-shadow: 0 0 24px rgba(229, 48, 48, 0.45);
             margin-bottom: 10px;
         }
 
@@ -58,11 +52,11 @@
         .info-card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: var(--r-xl);
             padding: 20px;
             margin-bottom: 25px;
             text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: var(--shadow-card);
         }
 
         .info-item {
@@ -87,12 +81,12 @@
         }
 
         .signature-area {
-            background: #fff; /* Fundo branco para a assinatura ficar limpa no documento */
-            border-radius: 20px;
+            background: #fff;
+            border-radius: var(--r-xl);
             width: 100%;
             height: 300px;
             position: relative;
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.9);
             touch-action: none;
             overflow: hidden;
         }
@@ -113,32 +107,48 @@
         .btn {
             border: none;
             padding: 16px;
-            border-radius: 14px;
+            border-radius: var(--r-lg);
             font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.01em;
         }
 
         .btn-clear {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-elevated);
             color: var(--text-dim);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .btn-clear:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border-color: var(--border-strong);
         }
 
         .btn-sign {
-            background: linear-gradient(135deg, #ff0000, #880000);
+            background: var(--primary);
             color: white;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+            border: 1px solid transparent;
+            box-shadow: var(--shadow-btn);
+        }
+
+        .btn-sign:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 24px rgba(229, 48, 48, 0.5);
+            transform: translateY(-1px);
         }
 
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
         .success-overlay {
@@ -156,15 +166,17 @@
 
         .success-overlay i {
             font-size: 80px;
-            color: #00ff88;
+            color: var(--success);
             margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4));
+            filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.45));
         }
 
         .success-overlay h2 {
             font-family: 'Outfit', sans-serif;
             font-size: 2rem;
+            font-weight: 800;
             margin-bottom: 10px;
+            letter-spacing: -0.5px;
         }
 
         /* Instrução de girar celular */

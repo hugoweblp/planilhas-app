@@ -1,15 +1,17 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const jwt    = require('jsonwebtoken');
 const { dbRun, dbGet } = require('../database/db');
-require('dotenv').config();
-
-const JWT_SECRET = process.env.JWT_SECRET || 'chave-secreta-padrao-pdde-premium';
+const { NIVEIS }       = require('../constants/niveis');
+const appConfig = require('../config/app'); // via getter: lê process.env.JWT_SECRET na hora de cada sign()
 
 /**
  * Registra um novo usuário no sistema
  */
 async function registrarUsuario(usuario, senha, nome, nivel = 'operador') {
-    const hash = await bcrypt.hash(senha, 10);
+    if (!Object.values(NIVEIS).includes(nivel)) {
+        throw new Error(`Nível inválido: "${nivel}". Valores permitidos: ${Object.values(NIVEIS).join(', ')}`);
+    }
+    const hash = await bcrypt.hash(senha, 12);
     try {
         await dbRun(
             'INSERT INTO usuarios (usuario, senha, nome, nivel) VALUES (?, ?, ?, ?)',
@@ -28,8 +30,11 @@ async function registrarUsuario(usuario, senha, nome, nivel = 'operador') {
  * Valida as credenciais e gera um token JWT
  */
 async function autenticarUsuario(usuario, senha) {
-    const user = await dbGet('SELECT * FROM usuarios WHERE usuario = ?', [usuario]);
-    
+    const user = await dbGet(
+        'SELECT id, usuario, email, nome, nivel, empresa_cnpj, senha FROM usuarios WHERE usuario = ?',
+        [usuario]
+    );
+
     if (!user) {
         throw new Error('Usuário ou senha incorretos.');
     }
@@ -39,11 +44,11 @@ async function autenticarUsuario(usuario, senha) {
         throw new Error('Usuário ou senha incorretos.');
     }
 
-    // Gera o token de acesso (Válido por 24 horas)
+    // Gera o token de acesso (Válido por 12 horas)
     const token = jwt.sign(
-        { id: user.id, usuario: user.usuario, nivel: user.nivel },
-        JWT_SECRET,
-        { expiresIn: '24h' }
+        { id: user.id, usuario: user.usuario, email: user.email || '', nivel: user.nivel, empresa_cnpj: user.empresa_cnpj || null },
+        appConfig.JWT_SECRET,
+        { expiresIn: '12h' }
     );
 
     return {
@@ -53,6 +58,7 @@ async function autenticarUsuario(usuario, senha) {
             id: user.id,
             nome: user.nome,
             usuario: user.usuario,
+            email: user.email || '',
             nivel: user.nivel
         }
     };

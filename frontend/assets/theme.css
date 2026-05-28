@@ -1,0 +1,193 @@
+/* ══════════════════════════════════════════════════════════════
+   Kitfy Design System — theme.css
+   Fonte única de verdade: tokens, base, componentes compartilhados
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Tokens ────────────────────────────────────────────────── */
+:root {
+  /* Superfícies */
+  --bg-dark:      #08080f;
+  --bg:           #08080f;
+  --card-bg:      rgba(255, 255, 255, 0.032);
+  --card:         var(--card-bg);
+  --bg-elevated:  rgba(255, 255, 255, 0.058);
+  --bg-overlay:   rgba(0, 0, 0, 0.82);
+
+  /* Vermelho Kitfy — aquecido, não puro */
+  --primary:        #e53030;
+  --primary-hover:  #c42828;
+  --primary-dim:    rgba(229, 48, 48, 0.12);
+  --primary-border: rgba(229, 48, 48, 0.28);
+
+  /* Semântico */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+
+  /* Texto */
+  --text-main:  #f1f5f9;
+  --text:       #f1f5f9;
+  --text-dim:   #94a3b8;
+  --dim:        #94a3b8;
+  --text-muted: #64748b;
+
+  /* Estrutura */
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Raios de borda */
+  --r-xl: 20px;
+  --r-lg: 16px;
+  --r-md: 10px;
+  --r-sm: 8px;
+  --r-xs: 6px;
+
+  /* Sombras */
+  --shadow-card:  0 4px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --shadow-modal: 0 28px 72px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --shadow-btn:   0 4px 18px rgba(229, 48, 48, 0.38);
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+/* ── Base ──────────────────────────────────────────────────── */
+body {
+  background-color: var(--bg-dark);
+  background-image:
+    radial-gradient(ellipse 70% 45% at 15% -5%, rgba(229, 48, 48, 0.09) 0%, transparent 62%),
+    radial-gradient(ellipse 45% 35% at 88% 108%, rgba(229, 48, 48, 0.055) 0%, transparent 60%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5,
+.font-display,
+.stat-value,
+.logo {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ── Animações ─────────────────────────────────────────────── */
+@keyframes kt-fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes kt-spin { to { transform: rotate(360deg); } }
+
+.kt-fade { animation: kt-fadeIn 0.4s ease-out; }
+
+/* ── Card / Superfície de Vidro ────────────────────────────── */
+.kcard {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Botão Primário ────────────────────────────────────────── */
+.kbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border: none;
+  border-radius: var(--r-md);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.kbtn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.kbtn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-btn);
+}
+
+.kbtn-ghost {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.kbtn-ghost:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-main);
+  border-color: var(--border-strong);
+}
+
+/* ── Badges ────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+.badge-success,
+.badge-signed  { background: rgba(16, 185, 129, 0.12); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.22); }
+.badge-warning { background: rgba(245, 158, 11, 0.12);  color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.22); }
+.badge-danger  { background: rgba(239, 68, 68, 0.12);   color: var(--danger);  border: 1px solid rgba(239, 68, 68, 0.22); }
+.badge-default,
+.badge-pending { background: rgba(255, 255, 255, 0.06); color: var(--text-dim); border: 1px solid var(--border); }
+
+/* ── Inputs ────────────────────────────────────────────────── */
+.kinput {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.kinput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+.kinput::placeholder { color: var(--text-muted); }
+
+/* ── Overlay de Modal ──────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.active { display: flex; }
+
+/* ── Caixa de Modal ────────────────────────────────────────── */
+.modal-box {
+  background: #0d0d16;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  padding: 40px;
+  width: 520px;
+  max-width: 92vw;
+  box-shadow: var(--shadow-modal);
+}

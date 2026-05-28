@@ -5,240 +5,230 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard PDDE Control - Gestão Profissional</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Manrope:wght@300;400;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/theme.css">
+    <script src="https://unpkg.com/lucide@0.321.0"></script>
+    <script src="assets/utils.js"></script>
+
     <style>
-        :root {
-            --bg-dark: #030000;
-            --card-bg: rgba(15, 0, 0, 0.85);
-            --primary: #ff3131;
-            --primary-hover: #ff4d4d;
-            --text-main: #ffffff;
-            --text-dim: #94a3b8;
-            --accent: #ff6b6b;
-            --border: rgba(255, 49, 49, 0.2);
-        }
+        body { display: flex; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Manrope', sans-serif;
-        }
-
-        body { 
-            background: var(--bg-dark); 
-            background-image: 
-                radial-gradient(circle at 0% 0%, rgba(255, 49, 49, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(255, 49, 49, 0.15) 0%, transparent 50%);
-            background-attachment: fixed;
-            color: #f8fafc;
-            min-height: 100vh;
-            display: flex;
-        }
-
-        h1, h2, h3, h4, h5, .logo, .stat-value {
-            font-family: 'Outfit', sans-serif;
-            text-shadow: 0 0 20px rgba(255, 49, 49, 0.1);
-        }
-
-        /* SIDEBAR */
+        /* ── Sidebar ── */
         .sidebar {
-            width: 280px;
-            background: rgba(15, 23, 42, 0.95);
+            width: 260px;
+            background: rgba(255,255,255,0.025);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 30px 20px;
+            padding: 28px 16px;
             height: 100vh;
             position: fixed;
+            backdrop-filter: blur(20px);
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             color: var(--primary);
+            padding: 0 6px;
         }
+        .logo i { width: 22px; height: 22px; }
 
         .nav-item {
-            padding: 12px 15px;
-            border-radius: 12px;
-            color: #94a3b8;
+            padding: 11px 14px;
+            border-radius: var(--r-md);
+            color: var(--text-dim);
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-            transition: 0.3s;
+            gap: 11px;
+            margin-bottom: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item i { width: 17px; height: 17px; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+        .nav-item.active {
+            background: var(--primary-dim);
+            color: var(--text-main);
+            border-left: 3px solid var(--primary);
+            padding-left: 11px;
         }
 
-        .nav-item:hover, .nav-item.active {
-            background: rgba(59, 130, 246, 0.1);
-            color: #fff;
-        }
-
-        .nav-item.active { border-left: 4px solid var(--primary); }
-
-        /* MAIN CONTENT */
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 40px;
-        }
+        /* ── Main ── */
+        .main-content { flex: 1; margin-left: 260px; padding: 36px 40px; }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
         }
+        .header h1 { font-size: 1.6rem; font-weight: 700; font-family: 'Outfit', sans-serif; }
+        .header h1 + p { color: var(--text-dim); margin-top: 4px; font-size: 0.85rem; }
 
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 15px;
-            background: var(--card);
-            padding: 8px 15px;
+            gap: 10px;
+            background: var(--bg-elevated);
+            padding: 8px 16px;
             border-radius: 50px;
             border: 1px solid var(--border);
+            font-size: 0.875rem;
+            color: var(--text-dim);
         }
+        .user-profile i { width: 18px; height: 18px; color: var(--text-dim); }
 
-        /* STATS CARDS */
+        /* ── Stats ── */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
+            gap: 18px;
+            margin-bottom: 36px;
         }
 
         .stat-card {
-            background: var(--card);
-            backdrop-filter: blur(10px);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 25px;
-            border-radius: 20px;
+            border-radius: var(--r-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
             position: relative;
             overflow: hidden;
         }
-
-        .stat-card::after {
+        .stat-card::before {
             content: '';
             position: absolute;
-            top: 0; right: 0;
-            width: 100px; height: 100px;
-            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-            opacity: 0.1;
+            top: -20px; right: -20px;
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: var(--primary-dim);
+            filter: blur(20px);
         }
+        .stat-label { color: var(--text-dim); font-size: 0.75rem; font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.75rem; font-weight: 800; font-family: 'Outfit', sans-serif; }
 
-        .stat-label { color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; }
-
-        /* TABLE SECTION */
+        /* ── Tabela ── */
         .content-section {
-            background: var(--card);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 30px;
+            border-radius: var(--r-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-card);
         }
-
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
+        .section-header h2 { font-size: 1rem; font-weight: 700; }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; color: #94a3b8; font-weight: 400; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
-        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        th { text-align: left; padding: 12px 16px; color: var(--text-dim); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+        td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; font-size: 0.875rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.015); }
 
-        .badge {
-            padding: 5px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-        .badge-signed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-
-        .btn-action {
-            background: rgba(255,255,255,0.05);
+        /* Input de busca inline */
+        #search-input {
+            background: var(--bg-elevated);
             border: 1px solid var(--border);
-            color: #fff;
-            padding: 8px;
-            border-radius: 8px;
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: var(--r-sm);
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.15s;
+        }
+        #search-input:focus { outline: none; border-color: var(--primary); }
+        #search-input::placeholder { color: var(--text-muted); }
+
+        /* ── Botões ── */
+        .btn-action {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 7px 9px;
+            border-radius: var(--r-sm);
             cursor: pointer;
-            transition: 0.2s;
-            margin-right: 5px;
-        }
-        .btn-action:hover { background: var(--primary); }
-
-        /* MODAL */
-        .modal-overlay {
-            position: fixed;
-            top:0; left:0; right:0; bottom:0;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            display: none;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            margin-right: 4px;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            gap: 5px;
+            font-size: 0.8rem;
         }
-
-        .modal {
-            background: #1e293b;
-            width: 500px;
-            border-radius: 24px;
-            padding: 40px;
-            text-align: center;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
-        }
-
-        .modal i { font-size: 4rem; color: var(--warning); margin-bottom: 20px; }
-        .modal h2 { margin-bottom: 15px; }
-        .modal p { color: #94a3b8; line-height: 1.6; margin-bottom: 30px; }
+        .btn-action i { width: 15px; height: 15px; }
+        .btn-action:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
 
         .btn-confirm {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 12px;
+            padding: 12px 28px;
+            border-radius: var(--r-md);
             font-weight: 700;
+            font-size: 0.9rem;
             cursor: pointer;
             width: 100%;
+            transition: background 0.15s, box-shadow 0.15s;
+            font-family: 'Inter', sans-serif;
         }
+        .btn-confirm:hover { background: var(--primary-hover); box-shadow: var(--shadow-btn); }
 
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: #0d0d16;
+            width: 500px;
+            max-width: 92vw;
+            border-radius: var(--r-xl);
+            padding: 42px;
+            text-align: center;
+            border: 1px solid var(--border-strong);
+            box-shadow: var(--shadow-modal);
+        }
+        .modal .modal-icon { font-size: 0; margin-bottom: 18px; display: flex; justify-content: center; }
+        .modal .modal-icon i { width: 48px; height: 48px; color: var(--warning); }
+        .modal h2 { font-family: 'Outfit', sans-serif; margin-bottom: 12px; font-size: 1.3rem; }
+        .modal p { color: var(--text-dim); line-height: 1.65; margin-bottom: 28px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div class="logo">
-            <i class="fas fa-shield-halved"></i>
+            <i data-lucide="shield-check"></i>
             <span>PDDE Control</span>
         </div>
-        
+
         <nav>
-            <a href="#" class="nav-item active" id="btn-nav-dash" onclick="showView('dash')"><i class="fas fa-chart-line"></i> Dashboard</a>
-            <a href="index.html" class="nav-item"><i class="fas fa-file-invoice"></i> Processar XMLs</a>
-            <a href="#" class="nav-item" id="btn-nav-schools" onclick="showView('schools')"><i class="fas fa-school"></i> Escolas</a>
-            <a href="#" class="nav-item"><i class="fas fa-cog"></i> Configurações</a>
+            <a href="dashboard.html" class="nav-item active" id="btn-nav-dash"><i data-lucide="trending-up"></i> Dashboard</a>
+            <a href="index.html" class="nav-item"><i data-lucide="file-text"></i> Processar XMLs</a>
+            <a href="dashboard.html" class="nav-item" id="btn-nav-schools"><i data-lucide="building-2"></i> Escolas</a>
+            <a href="gestao.html" class="nav-item"><i data-lucide="users"></i> Gestão da Equipe</a>
         </nav>
 
         <div style="margin-top: auto;">
-            <a href="#" onclick="logout()" class="nav-item" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Sair</a>
+            <a id="btn-nav-logout" href="#" class="nav-item" style="color: var(--danger);"><i data-lucide="log-out"></i> Sair</a>
         </div>
     </aside>
 
@@ -249,9 +239,9 @@
                 <p style="color: #94a3b8; margin-top: 5px;">Aqui está o resumo da sua gestão de notas.</p>
             </div>
             <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="index.html" class="btn-confirm" style="text-decoration:none; padding: 10px 20px; background: var(--primary);"><i class="fas fa-plus-circle"></i> Novo Processamento</a>
+                <a href="index.html" class="btn-confirm" style="text-decoration:none; padding: 10px 20px; background: var(--primary); display:inline-flex; align-items:center; gap:8px;"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i> Novo Processamento</a>
                 <div class="user-profile">
-                    <i class="fas fa-user-circle"></i>
+                    <i data-lucide="circle-user"></i>
                     <span id="username-display">Carregando...</span>
                 </div>
             </div>
@@ -281,7 +271,7 @@
                 <div class="section-header">
                     <h2 id="history-title">Histórico de Documentos</h2>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-action" id="btn-clear-filter" style="display:none;" onclick="fetchHistory()">Ver Todas</button>
+                        <button class="btn-action" id="btn-clear-filter" style="display:none;">Ver Todas</button>
                         <input type="text" id="search-input" placeholder="Buscar por NF ou Escola..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 8px 15px; border-radius: 8px;">
                     </div>
                 </div>
@@ -308,7 +298,7 @@
             <section class="content-section">
                 <div class="section-header">
                     <h2>Escolas Atendidas</h2>
-                    <button class="btn-action" style="background:var(--primary);"><i class="fas fa-plus"></i> Nova Escola</button>
+                    <button class="btn-action" style="background:var(--primary); color:#fff; border-color:var(--primary);"><i data-lucide="plus" style="width:14px;height:14px;"></i> Nova Escola</button>
                 </div>
                 <table>
                     <thead>
@@ -330,21 +320,27 @@
     <!-- MODAL DE AVISO DE IMPRESSÃO -->
     <div class="modal-overlay" id="print-modal">
         <div class="modal">
-            <i class="fas fa-exclamation-triangle"></i>
+            <div class="modal-icon"><i data-lucide="alert-triangle"></i></div>
             <h2>Atenção ao Layout!</h2>
             <p>
                 Para garantir que a planilha seja impressa <b>sem cortes</b>, abra o arquivo no Excel do seu computador.<br><br>
                 Certifique-se de que a <b>Linha Azul (Quebra de Página)</b> engloba todo o conteúdo. Arraste-a se necessário para ajustar à folha A4.
             </p>
-            <button class="btn-confirm" onclick="closePrintModal()">Entendi, Baixar Arquivo</button>
+            <button id="btn-confirm-print" class="btn-confirm">Entendi, Baixar Arquivo</button>
         </div>
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
+        const _dashUser = JSON.parse(localStorage.getItem('user'));
+        if (!_dashUser) window.location.href = 'login.html';
+
+        // Admin não usa o dashboard como cliente — vai direto para a Sala Central
+        if (_dashUser && ['admin', 'super_admin', 'master'].includes(_dashUser.nivel)) {
+            window.location.href = 'sys-lib-v2.html';
+        }
 
         async function init() {
+            lucide.createIcons();
             const user = JSON.parse(localStorage.getItem('user'));
             if (user) document.getElementById('username-display').textContent = user.nome;
 
@@ -369,7 +365,7 @@
         async function fetchSchools() {
             try {
                 const res = await fetch('/api/schools', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -382,16 +378,17 @@
             const body = document.getElementById('schools-body');
             body.innerHTML = schools.map(s => `
                 <tr>
-                    <td><div style="font-weight:600; font-size:0.85rem;">${s.razao_social}</div></td>
-                    <td style="color:var(--primary); font-family:monospace;">${s.cnpj}</td>
-                    <td>${s.municipio} - ${s.uf}</td>
+                    <td><div style="font-weight:600; font-size:0.875rem;">${escapeHtml(s.razao_social)}</div></td>
+                    <td style="color:var(--primary); font-family:monospace; font-size:0.8rem;">${escapeHtml(s.cnpj)}</td>
+                    <td style="color:var(--text-dim);">${escapeHtml(s.municipio)} — ${escapeHtml(s.uf)}</td>
                     <td>
-                        <button class="btn-action" title="Ver Notas" onclick="filterBySchool('${s.cnpj}', '${s.razao_social}')">
-                            <i class="fas fa-folder-open"></i> Ver Notas
+                        <button class="btn-action" title="Ver Notas" data-school-cnpj="${escapeHtml(s.cnpj)}" data-school-nome="${escapeHtml(s.razao_social)}">
+                            <i data-lucide="folder-open"></i> Ver Notas
                         </button>
                     </td>
                 </tr>
             `).join('');
+            lucide.createIcons();
         }
 
         async function filterBySchool(cnpj, nome) {
@@ -401,7 +398,7 @@
             
             try {
                 const res = await fetch(`/api/history/${cnpj}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -413,7 +410,7 @@
         async function fetchStats() {
             try {
                 const res = await fetch('/api/dashboard/stats', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -428,7 +425,7 @@
         async function fetchHistory() {
             try {
                 const res = await fetch('/api/history', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -439,41 +436,44 @@
 
         function renderHistory(history) {
             const body = document.getElementById('history-body');
-            body.innerHTML = history.map(n => `
+            body.innerHTML = history.length === 0
+                ? `<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding:32px;">Nenhum documento encontrado.</td></tr>`
+                : history.map(n => `
                 <tr>
                     <td>
-                        <div style="font-weight:600;">NF ${n.numero}</div>
-                        <div style="font-size:0.7rem; color:#94a3b8;">Série ${n.serie}</div>
+                        <div style="font-weight:600;">NF ${escapeHtml(n.numero)}</div>
+                        <div style="font-size:0.7rem; color:#94a3b8;">Série ${escapeHtml(n.serie)}</div>
                     </td>
                     <td>
-                        <div style="font-weight:600;">${n.escola_nome}</div>
-                        <div style="font-size:0.7rem; color:#94a3b8;">${n.cnpj_escola}</div>
+                        <div style="font-weight:600;">${escapeHtml(n.escola_nome)}</div>
+                        <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(n.cnpj_escola)}</div>
                     </td>
                     <td>${new Date(n.data_emissao).toLocaleDateString()}</td>
-                    <td style="font-weight:600;">R$ ${n.valor_total.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    <td style="font-weight:600;">R$ ${Number(n.valor_total || 0).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                     <td>
                         <span class="badge ${n.status === 'ASSINADO' ? 'badge-signed' : 'badge-pending'}">
-                            ${n.status}
+                            ${escapeHtml(n.status)}
                         </span>
                     </td>
                     <td>
-                        <button class="btn-action" title="Ver tudo desta Escola" onclick="filterBySchool('${n.cnpj_escola}', '${n.escola_nome}')">
-                            <i class="fas fa-folder-open" style="color:var(--warning);"></i>
+                        <button class="btn-action" title="Ver tudo desta Escola" data-school-cnpj="${escapeHtml(n.cnpj_escola)}" data-school-nome="${escapeHtml(n.escola_nome)}">
+                            <i data-lucide="folder-open" style="color:var(--warning);"></i>
                         </button>
-                        <button class="btn-action" title="Baixar Excel" onclick="showPrintWarning('${n.arquivo_excel}')">
-                            <i class="fas fa-file-excel" style="color:var(--success);"></i>
+                        <button class="btn-action" title="Baixar Excel" data-print-file="${escapeHtml(n.arquivo_excel)}">
+                            <i data-lucide="file-spreadsheet" style="color:var(--success);"></i>
                         </button>
-                        <button class="btn-action" title="Baixar Recibo" onclick="downloadFile('${n.arquivo_word}')">
-                            <i class="fas fa-file-word" style="color:var(--primary);"></i>
+                        <button class="btn-action" title="Baixar Recibo" data-dl-file="${escapeHtml(n.arquivo_word)}">
+                            <i data-lucide="file-type-2" style="color:var(--primary);"></i>
                         </button>
                         ${n.status === 'PENDENTE' ? `
-                            <button class="btn-action" title="Assinar Nota" style="color:var(--success);" onclick="signNote('${n.chave}')">
-                                <i class="fas fa-check-double"></i>
+                            <button class="btn-action" title="Assinar Nota" style="color:var(--success);" data-sign-chave="${escapeHtml(n.chave)}">
+                                <i data-lucide="check-check"></i>
                             </button>
                         ` : ''}
                     </td>
                 </tr>
             `).join('');
+            lucide.createIcons();
         }
 
         let pendingDownload = null;
@@ -500,7 +500,7 @@
             try {
                 const res = await fetch(`/api/notas/sign/${chave}`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -512,9 +512,28 @@
         }
 
         function logout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+                .finally(() => { localStorage.clear(); window.location.href = 'login.html'; });
         }
+
+        document.getElementById('btn-nav-logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+        document.getElementById('btn-clear-filter').addEventListener('click', () => fetchHistory());
+        document.getElementById('btn-confirm-print').addEventListener('click', () => closePrintModal());
+
+        document.getElementById('schools-body').addEventListener('click', e => {
+            const btn = e.target.closest('button[data-school-cnpj]');
+            if (!btn) return;
+            filterBySchool(btn.dataset.schoolCnpj, btn.dataset.schoolNome);
+        });
+
+        document.getElementById('history-body').addEventListener('click', e => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            if (btn.dataset.schoolCnpj) { filterBySchool(btn.dataset.schoolCnpj, btn.dataset.schoolNome); return; }
+            if (btn.dataset.printFile)  { showPrintWarning(btn.dataset.printFile); return; }
+            if (btn.dataset.dlFile)     { downloadFile(btn.dataset.dlFile); return; }
+            if (btn.dataset.signChave)  { signNote(btn.dataset.signChave); }
+        });
 
         init();
     </script>

@@ -19,7 +19,7 @@ async function processarTudo() {
   console.log('\n🚀 INICIANDO PROCESSAMENTO EM MASSA');
   console.log('────────────────────────────────────');
 
-  inicializarBanco();
+  await inicializarBanco();
 
   const arquivos = fs.readdirSync(UPLOADS_DIR).filter(f => f.toLowerCase().endsWith('.xml'));
 
@@ -33,7 +33,7 @@ async function processarTudo() {
     
     try {
       console.log(`📄 Analisando: ${arquivo}`);
-      const dados = parseNFe(caminhoXML);
+      const dados = await parseNFe(caminhoXML);
 
       // --- LÓGICA DE DUPLICADOS ---
       const notaExiste = await dbGet('SELECT chave FROM notas WHERE chave = ?', [dados.nota.chave]);
