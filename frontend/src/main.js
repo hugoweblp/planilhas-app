@@ -749,7 +749,8 @@ function renderizarHistorico(history) {
 
     const renderRow = (item) => {
         const cnpj = item.cnpj_escola || item.escola_cnpj || '';
-        const nome = item.escola_nome || 'Escola não identificada';
+        const cnpjFmt = cnpj ? cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : '';
+        const nome = item.escola_nome || (cnpjFmt ? `Escola ${cnpjFmt}` : 'Escola não identificada');
         const status = item.status || 'PENDENTE';
         const isPendente = status === 'PENDENTE';
         const isReentrega = status === 'REENTREGAR';
