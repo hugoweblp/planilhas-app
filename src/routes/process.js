@@ -98,11 +98,7 @@ router.post('/generate', autenticarToken, verificarPermissao('live_excel'), asyn
         }
         const cleanCnpjEscola   = String(dadosParaGerar.comprador.cnpj).replace(/\D/g, '').padStart(14, '0');
         const cleanCnpjVendedor = String(dadosParaGerar.vendedor.cnpj).replace(/\D/g, '').padStart(14, '0');
-
-        // Garante que o CNPJ do vendedor no body pertence ao usuário logado (previne seleção de template de outro tenant)
-        if (cleanCnpjVendedor !== String(req.user.empresa_cnpj).replace(/\D/g, '').padStart(14, '0')) {
-            return res.status(403).json({ success: false, error: 'Acesso negado: CNPJ do vendedor não pertence à empresa logada.' });
-        }
+        // Isolamento por empresa_cnpj (RLS) — um contratante pode ter múltiplos CNPJs emitentes
 
         const folder        = getEscolaPath(cleanCnpjEscola, dadosParaGerar.nota.dataISO, req.user.empresa_cnpj);
         const resultadoExcel = await gerarExcel(dadosParaGerar, folder.absolute);
