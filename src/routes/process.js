@@ -115,9 +115,7 @@ router.post('/generate', autenticarToken, verificarPermissao('live_excel'), asyn
         let wordRelative  = null;
         if (modulosAtivos.word !== false) {
             resultadoWord = await gerarReciboWord(dadosParaGerar, folder.absolute);
-            if (!resultadoWord)
-                return res.status(422).json({ success: false, error: `CNPJ do vendedor (${dadosParaGerar.vendedor.cnpjFmt}) não possui modelo de recibo Word cadastrado. Contate o administrador.` });
-            wordRelative = `${folder.relative}/${resultadoWord.nome}`;
+            if (resultadoWord) wordRelative = `${folder.relative}/${resultadoWord.nome}`;
         }
 
         const excelRelative = `${folder.relative}/${resultadoExcel.nome}`;

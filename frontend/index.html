@@ -2521,7 +2521,8 @@
           const linkGestao = document.getElementById('link-gestao');
 
           if (nameEl) nameEl.textContent = user.nome || 'Usuário';
-          if (roleEl) roleEl.textContent = isMaster ? 'Gestor Master' : 'Operador';
+          const _roleLabels = { master: 'Master', admin: 'Administrador', super_admin: 'Administrador', gestor: 'Gestor' };
+          if (roleEl) roleEl.textContent = _roleLabels[user.nivel?.toLowerCase()] || 'Operador';
           if (avatarEl) avatarEl.textContent = (user.nome || 'U').substring(0, 2).toUpperCase();
 
           if (isMaster) {
