@@ -168,7 +168,20 @@ async function inicializarBanco() {
             // Compatibilidade: status_assinatura pode não existir
             "ALTER TABLE empresas_contratantes ADD COLUMN status_assinatura VARCHAR(20) DEFAULT 'ativo'",
             // Compatibilidade: plano_vagas pode não existir
-            "ALTER TABLE empresas_contratantes ADD COLUMN plano_vagas INT DEFAULT 2"
+            "ALTER TABLE empresas_contratantes ADD COLUMN plano_vagas INT DEFAULT 2",
+            // Compatibilidade banco antigo: colunas de assinatura e contagem
+            "ALTER TABLE notas ADD COLUMN assinada_em DATETIME NULL",
+            "ALTER TABLE notas ADD COLUMN assinatura_path TEXT NULL",
+            "ALTER TABLE notas ADD COLUMN signature_token TEXT NULL",
+            "ALTER TABLE notas ADD COLUMN recebedor_nome TEXT NULL",
+            "ALTER TABLE notas ADD COLUMN recebedor_cpf TEXT NULL",
+            "ALTER TABLE notas ADD COLUMN recebedor_whatsapp TEXT NULL",
+            "ALTER TABLE notas ADD COLUMN gerado_qtd INT DEFAULT 1",
+            "ALTER TABLE notas ADD COLUMN impresso_qtd INT DEFAULT 0",
+            "ALTER TABLE notas ADD COLUMN entregue_qtd INT DEFAULT 0",
+            "ALTER TABLE notas ADD COLUMN arquivo_word TEXT NULL",
+            "ALTER TABLE escolas ADD COLUMN municipio VARCHAR(100) NULL",
+            "ALTER TABLE escolas ADD COLUMN uf VARCHAR(5) NULL"
         ];
         for (let alterSql of alters) {
             try {
