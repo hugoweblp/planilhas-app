@@ -339,6 +339,11 @@
             window.location.href = 'sys-lib-v2.html';
         }
 
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        }
+
         async function init() {
             lucide.createIcons();
             const user = JSON.parse(localStorage.getItem('user'));
