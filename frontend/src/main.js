@@ -269,7 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (usernameEl) usernameEl.innerText = user.nome || 'Kitfy User';
         if (avatarEl) avatarEl.innerText = String(user.nome || 'KI').substring(0, 2).toUpperCase();
-        if (userplanEl) userplanEl.innerText = (user.nivel === 'admin' || user.nivel === 'super_admin') ? 'Administrador' : 'Operador';
+        const nivelLabel = { admin: 'Administrador', super_admin: 'Administrador', master: 'Master', gestor: 'Gestor' };
+        if (userplanEl) userplanEl.innerText = nivelLabel[user.nivel] || 'Operador';
         
         // --- FASE 3: Liberação do Menu da Equipe (RBAC) ---
         if (user.nivel === 'gestor' || user.nivel === 'admin' || user.nivel === 'super_admin') {
