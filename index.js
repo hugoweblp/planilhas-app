@@ -56,9 +56,8 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
-// Rate limiting global
+// Rate limiting global — /api/auth/config é pública e não precisa de authLimiter
 app.use('/api/', apiLimiter);
-app.use('/api/auth/', authLimiter);
 
 // Frontend estático
 app.use(express.static(path.join(__dirname, 'frontend')));

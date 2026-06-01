@@ -12,6 +12,7 @@ const { registrarUsuario, autenticarUsuario } = require('../services/authService
 const { enviarCodigoAcesso } = require('../services/mailService');
 const { checkAssinatura, safeError } = require('../utils/helpers');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
+const { authLimiter } = require('../middleware/limiters');
 const { JWT_SECRET, ADMIN_EMAIL, cookieOptions } = require('../config/app');
 
 // GET /api/auth/config — config pública para o frontend (nunca expõe segredos)
@@ -31,7 +32,7 @@ router.post('/register', autenticarToken, autenticarMaster, async (req, res) => 
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
     try {
         const { usuario, senha } = req.body;
         const result = await autenticarUsuario(usuario, senha);
@@ -45,7 +46,7 @@ router.post('/login', async (req, res) => {
 });
 
 // POST /api/auth/validar-cnpj
-router.post('/validar-cnpj', async (req, res) => {
+router.post('/validar-cnpj', authLimiter, async (req, res) => {
     try {
         const { cnpj } = req.body;
         if (!cnpj) return res.status(400).json({ success: false, error: 'CNPJ ausente na requisição.' });
@@ -73,7 +74,7 @@ router.post('/validar-cnpj', async (req, res) => {
 });
 
 // POST /api/auth/google
-router.post('/google', async (req, res) => {
+router.post('/google', authLimiter, async (req, res) => {
     try {
         const { credential, isCadastro, cnpj, nome } = req.body;
         if (!credential) return res.status(400).json({ success: false, error: 'Credencial corporativa ausente.' });
@@ -160,7 +161,7 @@ router.post('/google', async (req, res) => {
 });
 
 // POST /api/auth/request-code
-router.post('/request-code', async (req, res) => {
+router.post('/request-code', authLimiter, async (req, res) => {
     try {
         const { email, cnpj } = req.body;
         if (!email || !cnpj) return res.status(400).json({ success: false, error: 'E-mail e CNPJ são obrigatórios.' });
@@ -189,7 +190,7 @@ router.post('/request-code', async (req, res) => {
 });
 
 // POST /api/auth/verify-code
-router.post('/verify-code', async (req, res) => {
+router.post('/verify-code', authLimiter, async (req, res) => {
     try {
         const { email, cnpj, code, nome } = req.body;
         if (!email || !cnpj || !code) return res.status(400).json({ success: false, error: 'Dados incompletos para validação.' });
