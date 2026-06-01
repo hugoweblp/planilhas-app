@@ -160,7 +160,15 @@ async function inicializarBanco() {
             // Auditoria IV: rastrear tentativas falhas de OTP para bloquear após 3 erros
             "ALTER TABLE auth_codes ADD COLUMN tentativas INT DEFAULT 0",
             // Auditoria IV: migrar data_emissao de TEXT para DATE (permite ORDER BY e range queries corretas)
-            "ALTER TABLE notas MODIFY COLUMN data_emissao DATE"
+            "ALTER TABLE notas MODIFY COLUMN data_emissao DATE",
+            // Compatibilidade banco antigo: criado_em pode não existir nas tabelas legadas
+            "ALTER TABLE empresas_contratantes ADD COLUMN criado_em DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE usuarios ADD COLUMN criado_em DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE notas ADD COLUMN criado_em DATETIME DEFAULT CURRENT_TIMESTAMP",
+            // Compatibilidade: status_assinatura pode não existir
+            "ALTER TABLE empresas_contratantes ADD COLUMN status_assinatura VARCHAR(20) DEFAULT 'ativo'",
+            // Compatibilidade: plano_vagas pode não existir
+            "ALTER TABLE empresas_contratantes ADD COLUMN plano_vagas INT DEFAULT 2"
         ];
         for (let alterSql of alters) {
             try {

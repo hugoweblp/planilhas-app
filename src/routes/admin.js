@@ -40,7 +40,7 @@ router.get('/stats', autenticarToken, autenticarMaster, async (req, res) => {
 // GET /api/admin/empresas
 router.get('/empresas', autenticarToken, autenticarMaster, async (req, res) => {
     try {
-        const empresas = await dbAll('SELECT * FROM empresas_contratantes ORDER BY criado_em DESC');
+        const empresas = await dbAll('SELECT * FROM empresas_contratantes ORDER BY cnpj ASC');
         for (let emp of empresas) {
             const vagas = await dbGet('SELECT COUNT(*) as ocupadas FROM usuarios WHERE empresa_cnpj = ?', [emp.cnpj]);
             emp.vagas_ocupadas = vagas ? vagas.ocupadas : 0;
