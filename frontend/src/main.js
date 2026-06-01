@@ -1891,7 +1891,7 @@ window.carregarEquipe = async function() {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Carregando equipe...</td></tr>';
 
     try {
-        const response = await axios.get(`${API_URL}/equipe`);
+        const response = await axios.get(`${API_URL}/empresa/equipe`);
 
         if (response.data.success) {
             window.equipeConectada = response.data.equipe || [];
@@ -1963,7 +1963,7 @@ window.togglePermissao = async function(id, key, value) {
     op.permissoesObj[key] = value;
 
     try {
-        await axios.put(`${API_URL}/equipe/${id}/permissoes`, {
+        await axios.patch(`${API_URL}/empresa/equipe/${id}/permissoes`, {
             permissoes: op.permissoesObj
         });
         
@@ -1988,7 +1988,7 @@ window.demitirOperador = async function(id, nome) {
     if (!res) return;
 
     try {
-        const response = await axios.delete(`${API_URL}/equipe/${id}`);
+        const response = await axios.delete(`${API_URL}/empresa/equipe/${id}`);
 
         if (response.data.success) {
             window.alert(`✓ ${response.data.message}`);
