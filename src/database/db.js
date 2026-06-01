@@ -155,7 +155,8 @@ async function inicializarBanco() {
             "ALTER TABLE notas MODIFY COLUMN status ENUM('PENDENTE','ASSINADO','REENTREGAR') DEFAULT 'PENDENTE'",
             // Fase 5: Foreign Keys (integridade referencial)
             "ALTER TABLE usuarios ADD CONSTRAINT fk_usuarios_empresa FOREIGN KEY (empresa_cnpj) REFERENCES empresas_contratantes(cnpj) ON DELETE SET NULL",
-            "ALTER TABLE escolas ADD CONSTRAINT fk_escolas_empresa FOREIGN KEY (empresa_dona_cnpj) REFERENCES empresas_contratantes(cnpj) ON DELETE CASCADE",
+            // FK removida — causava INSERT silencioso quando empresa ainda nao existia no momento do upload
+            // "ALTER TABLE escolas ADD CONSTRAINT fk_escolas_empresa FOREIGN KEY (empresa_dona_cnpj) REFERENCES empresas_contratantes(cnpj) ON DELETE CASCADE",
             "ALTER TABLE notas ADD CONSTRAINT fk_notas_vendedor FOREIGN KEY (cnpj_vendedor) REFERENCES empresas_contratantes(cnpj) ON DELETE RESTRICT",
             // Auditoria IV: rastrear tentativas falhas de OTP para bloquear após 3 erros
             "ALTER TABLE auth_codes ADD COLUMN tentativas INT DEFAULT 0",

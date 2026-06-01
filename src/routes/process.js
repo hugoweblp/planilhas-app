@@ -63,13 +63,17 @@ router.post('/upload', autenticarToken, verificarPermissao('live_excel'), upload
             const notaInDb = await dbGet('SELECT chave FROM notas WHERE chave = ? AND cnpj_vendedor = ?', [nota.nota.chave, req.user.empresa_cnpj]);
             nota.duplicada = !!notaInDb;
 
-            const schoolInDb = await dbAll('SELECT cnpj FROM escolas WHERE cnpj = ? AND empresa_dona_cnpj = ?', [cnpjEscola, req.user.empresa_cnpj]);
-            if (schoolInDb.length === 0) {
+            try {
                 await dbRun(
-                    'INSERT IGNORE INTO escolas (cnpj, razao_social, logradouro, municipio, uf, empresa_dona_cnpj) VALUES (?, ?, ?, ?, ?, ?)',
+                    `INSERT INTO escolas (cnpj, razao_social, logradouro, municipio, uf, empresa_dona_cnpj)
+                     VALUES (?, ?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE razao_social = VALUES(razao_social), logradouro = VALUES(logradouro),
+                         municipio = VALUES(municipio), uf = VALUES(uf)`,
                     [cnpjEscola, nota.comprador.nome, nota.comprador.logradouro, nota.comprador.municipio, nota.comprador.uf, req.user.empresa_cnpj]
                 );
                 escolasNovas++;
+            } catch (e) {
+                console.error(`[upload] Falha ao salvar escola ${cnpjEscola}:`, e.message);
             }
         }
 
