@@ -43,6 +43,9 @@ router.post('/upload', autenticarToken, verificarPermissao('live_excel'), upload
         if (arquivos.length === 0)
             return res.status(400).json({ success: false, error: 'Nenhum arquivo enviado.' });
 
+        if (!req.user.empresa_cnpj)
+            return res.status(400).json({ success: false, error: 'Nenhuma empresa selecionada. Se você é administrador, use "Simular Acesso" na Sala Central (sys-lib) para operar como uma empresa antes de processar XMLs.' });
+
         const notasProcessadas = [];
         const falhas = [];
         for (const file of arquivos) {

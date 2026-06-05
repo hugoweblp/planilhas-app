@@ -1083,10 +1083,15 @@ async function handleFiles(files) {
                 abrirModalEdicao(loteAtual[0]);
             }
         }
-    } catch (error) { 
+    } catch (error) {
         console.error('Erro no upload:', error);
-        const serverMessage = error.response?.data?.error || 'Erro desconhecido no servidor.';
-        alert(`Erro ao processar XML:\n${serverMessage}`);
+        const data = error.response?.data;
+        const serverMessage = data?.error || 'Erro desconhecido no servidor.';
+        const falhas = data?.falhas;
+        const detalhe = falhas?.length
+            ? '\n\nDetalhe:\n' + falhas.map(f => `• ${f.arquivo}: ${f.erro}`).join('\n')
+            : '';
+        showNotification(`${serverMessage}${detalhe}`, 'error');
     } finally {
         const scanner = document.getElementById('scanner-modal');
         if (scanner) {
