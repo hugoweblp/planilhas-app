@@ -133,6 +133,7 @@ router.delete('/empresas/:cnpj', autenticarToken, autenticarMaster, async (req, 
         const conn = await db.getConnection();
         try {
             await conn.beginTransaction();
+            await conn.execute('DELETE e FROM entregas e INNER JOIN notas n ON e.chave_nota = n.chave WHERE n.cnpj_vendedor = ?', [cnpj]);
             await conn.execute('DELETE FROM notas WHERE cnpj_vendedor = ?', [cnpj]);
             await conn.execute('DELETE FROM usuarios WHERE empresa_cnpj = ?', [cnpj]);
             await conn.execute('DELETE FROM escolas WHERE empresa_dona_cnpj = ?', [cnpj]);

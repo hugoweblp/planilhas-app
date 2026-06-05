@@ -208,7 +208,9 @@ async function inicializarBanco() {
             'CREATE INDEX idx_usuarios_empresa ON usuarios (empresa_cnpj)',
             'CREATE INDEX idx_escolas_dona ON escolas (empresa_dona_cnpj)',
             'CREATE INDEX idx_notas_signature_token ON notas (signature_token(32))',
-            'CREATE INDEX idx_empresas_email_gestor ON empresas_contratantes (email_gestor)'
+            'CREATE INDEX idx_empresas_email_gestor ON empresas_contratantes (email_gestor)',
+            'CREATE INDEX idx_historico_empresa ON historico_acoes (empresa_cnpj)',
+            'CREATE INDEX idx_historico_data ON historico_acoes (data_hora)'
         ];
 
         for (let idxSql of indices) {
@@ -266,6 +268,29 @@ async function inicializarBanco() {
     }
 }
 
+// Limpeza automática via Node.js (fallback ao MySQL Event Scheduler que exige SUPER na Hostinger)
+async function _limparAuthCodes() {
+    try {
+        const [r] = await db.execute('DELETE FROM auth_codes WHERE expires_at < NOW()');
+        if (r.affectedRows > 0) console.log(`🧹 ${r.affectedRows} auth_code(s) expirado(s) removido(s).`);
+    } catch (_) {}
+}
+
+async function _limparHistoricoAntigo() {
+    try {
+        const [r] = await db.execute("DELETE FROM historico_acoes WHERE data_hora < DATE_SUB(NOW(), INTERVAL 90 DAY)");
+        if (r.affectedRows > 0) console.log(`🧹 ${r.affectedRows} log(s) de auditoria com +90 dias removido(s).`);
+    } catch (_) {}
+}
+
+function agendarLimpezaAutomatica() {
+    _limparAuthCodes();       // imediato no startup
+    _limparHistoricoAntigo(); // imediato no startup
+    setInterval(_limparAuthCodes,       60 * 60 * 1000);       // a cada 1 hora
+    setInterval(_limparHistoricoAntigo, 24 * 60 * 60 * 1000);  // a cada 24 horas
+    console.log('⏰ Limpeza automática Node.js agendada (1h auth_codes / 24h logs antigos).');
+}
+
 // Helpers unificados para usar o banco com Async/Await
 async function dbRun(sql, params = []) {
     const paramsWithNulls = params.map(p => p === undefined ? null : p);
@@ -286,6 +311,7 @@ async function dbAll(sql, params = []) {
 module.exports = {
     db,
     inicializarBanco,
+    agendarLimpezaAutomatica,
     dbRun,
     dbGet,
     dbAll

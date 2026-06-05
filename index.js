@@ -8,7 +8,7 @@ const compression  = require('compression');
 const cookieParser = require('cookie-parser');
 
 const { apiLimiter, authLimiter } = require('./src/middleware/limiters');
-const { inicializarBanco }        = require('./src/database/db');
+const { inicializarBanco, agendarLimpezaAutomatica } = require('./src/database/db');
 const { migrarCpfParaCriptografado } = require('./src/utils/helpers');
 
 // =============================================================================
@@ -100,6 +100,7 @@ process.on('unhandledRejection', (reason) => { console.error('💀 [FATAL] unhan
 // =============================================================================
 (async () => {
     await inicializarBanco();
+    agendarLimpezaAutomatica();
     await migrarCpfParaCriptografado();
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`
