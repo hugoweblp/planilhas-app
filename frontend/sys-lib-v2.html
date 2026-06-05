@@ -491,6 +491,76 @@
         }
 
         .main { animation: fadeIn 0.35s ease-out; }
+
+        /* ── NAV TABS ── */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 32px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 5px;
+            width: fit-content;
+        }
+        .nav-tab {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 20px; border-radius: 10px;
+            border: none; background: transparent;
+            color: var(--dim); font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: 0.18s; font-family: 'Inter', sans-serif;
+        }
+        .nav-tab i { width: 15px; height: 15px; }
+        .nav-tab:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .nav-tab.active { background: var(--primary); color: #fff; }
+
+        /* ── AUDIT PANEL ── */
+        #panel-auditoria { display: none; }
+        .audit-filters {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 20px; align-items: flex-end;
+        }
+        .audit-filters select,
+        .audit-filters input[type="date"],
+        .audit-filters input[type="text"] {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            padding: 9px 14px; font-size: 0.82rem;
+            font-family: 'Inter', sans-serif;
+            appearance: none; -webkit-appearance: none;
+            min-width: 160px; cursor: pointer;
+        }
+        .audit-filters select:focus,
+        .audit-filters input:focus { outline: none; border-color: var(--primary); }
+        .audit-filters .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .audit-filters .filter-label {
+            font-size: 0.65rem; font-weight: 700; color: var(--dim);
+            text-transform: uppercase; letter-spacing: 0.8px; padding-left: 2px;
+        }
+        .audit-pagination {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 16px; color: var(--dim); font-size: 0.8rem;
+        }
+        .audit-pagination button {
+            background: var(--card); border: 1px solid var(--border); color: var(--dim);
+            padding: 7px 16px; border-radius: 9px; cursor: pointer;
+            font-size: 0.8rem; font-weight: 600; font-family: 'Inter', sans-serif;
+            transition: 0.15s;
+        }
+        .audit-pagination button:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: #fff; }
+        .audit-pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .audit-type-badge {
+            display: inline-block; padding: 3px 9px; border-radius: 6px;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;
+            background: rgba(255,255,255,0.06); color: var(--dim);
+        }
+        .audit-type-badge.login  { background: rgba(16,185,129,0.12); color: var(--success); }
+        .audit-type-badge.logout { background: rgba(255,255,255,0.05); color: var(--dim); }
+        .audit-type-badge.upload { background: rgba(59,130,246,0.12); color: #60a5fa; }
+        .audit-type-badge.gerar  { background: rgba(168,85,247,0.12); color: #c084fc; }
+        .audit-type-badge.perm   { background: rgba(245,158,11,0.12); color: var(--warning); }
+        .audit-type-badge.remove { background: rgba(239,68,68,0.12); color: var(--primary); }
+        .audit-type-badge.falha  { background: rgba(239,68,68,0.12); color: var(--primary); }
     </style>
 </head>
 <body>
@@ -511,51 +581,134 @@
 <!-- MAIN -->
 <div class="main">
 
-    <!-- Banner de alerta (vencendo em 7 dias) -->
-    <div id="alert-banner" class="alert-banner" style="display:none;">
-        <i data-lucide="alert-triangle" style="width:18px; flex-shrink:0;"></i>
-        <span id="alert-text"></span>
-    </div>
-
-    <!-- STATS -->
-    <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value" id="s-total">--</div><i data-lucide="building-2" class="stat-icon" style="width:48px;height:48px;"></i></div>
-        <div class="stat-card success"><div class="stat-label">Clientes Ativos</div><div class="stat-value" id="s-ativos">--</div><i data-lucide="check-circle" class="stat-icon" style="width:48px;height:48px;"></i></div>
-        <div class="stat-card"><div class="stat-label">Notas Processadas</div><div class="stat-value" id="s-notas">--</div><i data-lucide="file-text" class="stat-icon" style="width:48px;height:48px;"></i></div>
-        <div class="stat-card"><div class="stat-label">Volume Total</div><div class="stat-value" id="s-volume">--</div><div class="stat-sub">acumulado</div><i data-lucide="trending-up" class="stat-icon" style="width:48px;height:48px;"></i></div>
-        <div class="stat-card" id="stat-receita"><div class="stat-label">Receita Mensal</div><div class="stat-value" id="s-receita">--</div><div class="stat-sub">clientes ativos</div><i data-lucide="circle-dollar-sign" class="stat-icon" style="width:48px;height:48px;"></i></div>
-    </div>
-
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-        <div class="section-title">
-            <i data-lucide="users" style="color:var(--primary); width:18px;"></i>
-            Clientes SaaS
-            <span class="count-badge" id="total-badge">--</span>
-        </div>
-        <button id="btn-abrir-novo" class="btn-primary">
-            <i data-lucide="plus" style="width:16px;"></i> Novo Cliente
+    <!-- NAV TABS -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" id="tab-clientes" onclick="showPanel('clientes')">
+            <i data-lucide="users"></i> Clientes SaaS
+        </button>
+        <button class="nav-tab" id="tab-auditoria" onclick="showPanel('auditoria')">
+            <i data-lucide="shield-check"></i> Auditoria
         </button>
     </div>
 
-    <!-- TABLE -->
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>CNPJ / Razão Social</th>
-                    <th>Vagas</th>
-                    <th>Mensalidade</th>
-                    <th>Validade</th>
-                    <th>Status</th>
-                    <th style="text-align:center;">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <tr class="empty-row"><td colspan="6">Carregando...</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <!-- PANEL: CLIENTES -->
+    <div id="panel-clientes">
+
+        <!-- Banner de alerta (vencendo em 7 dias) -->
+        <div id="alert-banner" class="alert-banner" style="display:none;">
+            <i data-lucide="alert-triangle" style="width:18px; flex-shrink:0;"></i>
+            <span id="alert-text"></span>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card"><div class="stat-label">Total Clientes</div><div class="stat-value" id="s-total">--</div><i data-lucide="building-2" class="stat-icon" style="width:48px;height:48px;"></i></div>
+            <div class="stat-card success"><div class="stat-label">Clientes Ativos</div><div class="stat-value" id="s-ativos">--</div><i data-lucide="check-circle" class="stat-icon" style="width:48px;height:48px;"></i></div>
+            <div class="stat-card"><div class="stat-label">Notas Processadas</div><div class="stat-value" id="s-notas">--</div><i data-lucide="file-text" class="stat-icon" style="width:48px;height:48px;"></i></div>
+            <div class="stat-card"><div class="stat-label">Volume Total</div><div class="stat-value" id="s-volume">--</div><div class="stat-sub">acumulado</div><i data-lucide="trending-up" class="stat-icon" style="width:48px;height:48px;"></i></div>
+            <div class="stat-card" id="stat-receita"><div class="stat-label">Receita Mensal</div><div class="stat-value" id="s-receita">--</div><div class="stat-sub">clientes ativos</div><i data-lucide="circle-dollar-sign" class="stat-icon" style="width:48px;height:48px;"></i></div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="section-title">
+                <i data-lucide="users" style="color:var(--primary); width:18px;"></i>
+                Clientes SaaS
+                <span class="count-badge" id="total-badge">--</span>
+            </div>
+            <button id="btn-abrir-novo" class="btn-primary">
+                <i data-lucide="plus" style="width:16px;"></i> Novo Cliente
+            </button>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>CNPJ / Razão Social</th>
+                        <th>Vagas</th>
+                        <th>Mensalidade</th>
+                        <th>Validade</th>
+                        <th>Status</th>
+                        <th style="text-align:center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr class="empty-row"><td colspan="6">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- /panel-clientes -->
+
+    <!-- PANEL: AUDITORIA -->
+    <div id="panel-auditoria">
+
+        <div class="toolbar" style="margin-bottom:20px;">
+            <div class="section-title">
+                <i data-lucide="shield-check" style="color:var(--primary); width:18px;"></i>
+                Log de Auditoria
+                <span class="count-badge" id="audit-total-badge">--</span>
+            </div>
+            <button onclick="carregarAuditoria(true)" class="btn-primary" style="background:rgba(255,255,255,0.07); color:var(--text);">
+                <i data-lucide="refresh-cw" style="width:14px;"></i> Atualizar
+            </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="audit-filters">
+            <div class="filter-group">
+                <span class="filter-label">Tipo de ação</span>
+                <select id="af-tipo">
+                    <option value="">Todos os tipos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Empresa (CNPJ)</span>
+                <input type="text" id="af-empresa" placeholder="00000000000000">
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">De</span>
+                <input type="date" id="af-de">
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Até</span>
+                <input type="date" id="af-ate">
+            </div>
+            <button onclick="carregarAuditoria(true)" class="btn-primary" style="margin-top:auto;">
+                <i data-lucide="search" style="width:14px;"></i> Filtrar
+            </button>
+        </div>
+
+        <!-- Tabela de logs -->
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data / Hora</th>
+                        <th>Operador</th>
+                        <th>Nível</th>
+                        <th>Ação</th>
+                        <th>Empresa</th>
+                        <th>IP</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody id="audit-body">
+                    <tr class="empty-row"><td colspan="7">Selecione a aba Auditoria para carregar.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="audit-pagination">
+            <button id="btn-audit-prev" onclick="mudarPaginaAudit(-1)" disabled>&#8592; Anterior</button>
+            <span id="audit-pag-info">—</span>
+            <button id="btn-audit-next" onclick="mudarPaginaAudit(1)" disabled>Próxima &#8594;</button>
+        </div>
+
+    </div><!-- /panel-auditoria -->
 
 </div>
 
@@ -1075,6 +1228,121 @@
         if (btn.dataset.toggleCnpj) { toggleStatus(btn.dataset.toggleCnpj, btn.dataset.toggleStatus); return; }
         if (btn.dataset.delCnpj)    { abrirDelete(btn.dataset.delCnpj, btn.dataset.delRazao); }
     });
+
+    // ── NAV TABS ─────────────────────────────────────────────────
+    function showPanel(name) {
+        document.getElementById('panel-clientes').style.display = name === 'clientes' ? '' : 'none';
+        document.getElementById('panel-auditoria').style.display = name === 'auditoria' ? '' : 'none';
+        document.getElementById('tab-clientes').classList.toggle('active', name === 'clientes');
+        document.getElementById('tab-auditoria').classList.toggle('active', name === 'auditoria');
+        lucide.createIcons();
+        if (name === 'auditoria' && !auditCarregado) carregarAuditoria(true);
+    }
+
+    // ── AUDITORIA ─────────────────────────────────────────────────
+    let auditOffset     = 0;
+    const AUDIT_LIMIT   = 50;
+    let auditTotal      = 0;
+    let auditCarregado  = false;
+
+    function auditTypeBadge(tipo) {
+        if (!tipo) return '<span class="audit-type-badge">—</span>';
+        const t = tipo.toLowerCase();
+        let cls = '';
+        if (t.includes('login'))  cls = t.includes('falha') ? 'falha' : 'login';
+        else if (t.includes('logout'))  cls = 'logout';
+        else if (t.includes('upload'))  cls = 'upload';
+        else if (t.includes('planilha') || t.includes('gerada')) cls = 'gerar';
+        else if (t.includes('permissao')) cls = 'perm';
+        else if (t.includes('removido') || t.includes('remove')) cls = 'remove';
+        return `<span class="audit-type-badge ${cls}">${escapeHtml(tipo)}</span>`;
+    }
+
+    function fmtDataHora(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleString('pt-BR', { timeZone: 'America/Belem', day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    }
+
+    async function carregarAuditoria(reset = false) {
+        if (reset) auditOffset = 0;
+
+        const tipo    = document.getElementById('af-tipo').value;
+        const empresa = document.getElementById('af-empresa').value.replace(/\D/g, '');
+        const de      = document.getElementById('af-de').value;
+        const ate     = document.getElementById('af-ate').value;
+
+        const params = new URLSearchParams({ limit: AUDIT_LIMIT, offset: auditOffset });
+        if (tipo)    params.set('tipo', tipo);
+        if (empresa) params.set('empresa_cnpj', empresa.padStart(14, '0'));
+        if (de)      params.set('de', de);
+        if (ate)     params.set('ate', ate);
+
+        const tbody = document.getElementById('audit-body');
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Carregando...</td></tr>';
+
+        const data = await api(`/api/admin/auditoria?${params}`);
+        if (!data.success) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="7" style="color:var(--danger);">Erro ao carregar logs.</td></tr>`;
+            return;
+        }
+
+        auditTotal     = data.total || 0;
+        auditCarregado = true;
+
+        document.getElementById('audit-total-badge').textContent = auditTotal;
+
+        const prevBtn = document.getElementById('btn-audit-prev');
+        const nextBtn = document.getElementById('btn-audit-next');
+        const pagInfo = document.getElementById('audit-pag-info');
+
+        const pagAtual = Math.floor(auditOffset / AUDIT_LIMIT) + 1;
+        const pagTotal = Math.max(1, Math.ceil(auditTotal / AUDIT_LIMIT));
+        pagInfo.textContent  = `Página ${pagAtual} de ${pagTotal} (${auditTotal} registros)`;
+        prevBtn.disabled     = auditOffset === 0;
+        nextBtn.disabled     = auditOffset + AUDIT_LIMIT >= auditTotal;
+
+        if (!data.logs || data.logs.length === 0) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Nenhum registro encontrado.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.logs.map(log => `
+            <tr>
+                <td style="white-space:nowrap; font-family:'JetBrains Mono',monospace; font-size:0.75rem;">${fmtDataHora(log.data_hora)}</td>
+                <td>
+                    <div style="font-weight:600; font-size:0.85rem;">${escapeHtml(log.usuario_nome || '—')}</div>
+                    <div style="font-size:0.72rem; color:var(--dim);">${escapeHtml(log.usuario_id ? `#${log.usuario_id}` : '')}</div>
+                </td>
+                <td><span style="font-size:0.75rem; color:var(--dim);">${escapeHtml(log.usuario_nivel || '—')}</span></td>
+                <td>${auditTypeBadge(log.tipo_acao)}</td>
+                <td style="font-size:0.75rem;">${escapeHtml(log.empresa_nome || (log.empresa_cnpj ? fmtCNPJ(log.empresa_cnpj) : '—'))}</td>
+                <td style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--dim);">${escapeHtml(log.ip_address || '—')}</td>
+                <td style="font-size:0.78rem; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(log.detalhes || '')}">${escapeHtml(log.detalhes || '—')}</td>
+            </tr>
+        `).join('');
+
+        lucide.createIcons();
+    }
+
+    function mudarPaginaAudit(dir) {
+        const novo = auditOffset + dir * AUDIT_LIMIT;
+        if (novo < 0 || novo >= auditTotal) return;
+        auditOffset = novo;
+        carregarAuditoria(false);
+    }
+
+    async function carregarTiposAuditoria() {
+        const data = await api('/api/admin/auditoria/tipos').catch(() => null);
+        if (!data?.success) return;
+        const sel = document.getElementById('af-tipo');
+        data.tipos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t; opt.textContent = t;
+            sel.appendChild(opt);
+        });
+    }
+
+    carregarTiposAuditoria();
 </script>
 </body>
 </html>

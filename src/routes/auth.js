@@ -10,7 +10,7 @@ const { db, dbGet, dbRun } = require('../database/db');
 const { NIVEIS, NIVEIS_MASTER } = require('../constants/niveis');
 const { registrarUsuario, autenticarUsuario } = require('../services/authService');
 const { enviarCodigoAcesso } = require('../services/mailService');
-const { checkAssinatura, safeError } = require('../utils/helpers');
+const { checkAssinatura, safeError, registrarAuditoria } = require('../utils/helpers');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/limiters');
 const { JWT_SECRET, ADMIN_EMAIL, cookieOptions } = require('../config/app');
@@ -36,12 +36,127 @@ router.post('/login', authLimiter, async (req, res) => {
     try {
         const { usuario, senha } = req.body;
         const result = await autenticarUsuario(usuario, senha);
-        const { token, ...safeResult } = result;
+        const { token, user } = result;
+
+        // Master/admin obrigatoriamente passa pelo 2FA antes de receber o JWT real
+        if (user && NIVEIS_MASTER.includes(user.nivel)) {
+            const tempToken = jwt.sign(
+                { id: user.id, nivel: user.nivel, email: user.email, scope: '2fa_pending' },
+                JWT_SECRET,
+                { expiresIn: '10m' }
+            );
+            return res.json({ success: true, requires2FA: true, tempToken, user: { nome: user.nome, email: user.email } });
+        }
+
+        // Funcionário — emite JWT direto
         if (token) res.cookie('access_token', token, cookieOptions);
-        res.json(safeResult);
+        req.user = user;
+        await registrarAuditoria(req, 'LOGIN_SENHA', `Login por senha: ${usuario}`);
+        res.json({ success: true, user });
     } catch (error) {
         console.error('❌ Erro no Login:', error.message);
         res.status(401).json({ success: false, error: 'Usuário ou senha incorretos.' });
+    }
+});
+
+// POST /api/auth/2fa/request — envia OTP para o e-mail do master após senha correta
+router.post('/2fa/request', authLimiter, async (req, res) => {
+    try {
+        const { tempToken } = req.body;
+        if (!tempToken) return res.status(400).json({ success: false, error: 'Token temporário ausente.' });
+
+        let payload;
+        try { payload = jwt.verify(tempToken, JWT_SECRET); } catch (_) {
+            return res.status(401).json({ success: false, error: 'Token expirado. Faça login novamente.' });
+        }
+        if (payload.scope !== '2fa_pending')
+            return res.status(403).json({ success: false, error: 'Token inválido para este fluxo.' });
+
+        const email = payload.email;
+        if (!email) return res.status(400).json({ success: false, error: 'E-mail não encontrado no token.' });
+
+        // Throttle: máx 3 OTPs em 15 minutos
+        const recentCodes = await dbGet(
+            'SELECT COUNT(*) as count FROM auth_codes WHERE email = ? AND criado_em > DATE_SUB(NOW(), INTERVAL 15 MINUTE)',
+            [email]
+        );
+        if (recentCodes?.count >= 3)
+            return res.status(429).json({ success: false, error: 'Muitas tentativas. Aguarde 15 minutos.' });
+
+        const codigo     = crypto.randomInt(100000, 1000000).toString();
+        const codigoHash = crypto.createHash('sha256').update(codigo + email.toLowerCase()).digest('hex');
+        const expiresAt  = new Date(Date.now() + 5 * 60000).toISOString().slice(0, 19).replace('T', ' ');
+        await dbRun('INSERT INTO auth_codes (email, cnpj, code, expires_at) VALUES (?, ?, ?, ?)', [email, 'MASTER_2FA', codigoHash, expiresAt]);
+        await enviarCodigoAcesso(email, codigo);
+
+        res.json({ success: true, message: `Código enviado para ${email}` });
+    } catch (error) {
+        console.error('Erro no 2FA request:', error.message);
+        res.status(500).json({ success: false, error: 'Falha ao enviar código 2FA.' });
+    }
+});
+
+// POST /api/auth/2fa/verify — valida OTP e emite JWT real para o master
+router.post('/2fa/verify', authLimiter, async (req, res) => {
+    try {
+        const { tempToken, code } = req.body;
+        if (!tempToken || !code) return res.status(400).json({ success: false, error: 'Dados incompletos.' });
+
+        let payload;
+        try { payload = jwt.verify(tempToken, JWT_SECRET); } catch (_) {
+            return res.status(401).json({ success: false, error: 'Token expirado. Faça login novamente.' });
+        }
+        if (payload.scope !== '2fa_pending')
+            return res.status(403).json({ success: false, error: 'Token inválido para este fluxo.' });
+
+        const email = payload.email;
+
+        // Limpeza inline de OTPs expirados
+        await dbRun('DELETE FROM auth_codes WHERE expires_at < NOW()').catch(() => {});
+
+        const authRecord = await dbGet(
+            'SELECT * FROM auth_codes WHERE email = ? AND cnpj = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
+            [email, 'MASTER_2FA']
+        );
+        if (!authRecord) {
+            req.user = { id: payload.id, nivel: payload.nivel, email };
+            await registrarAuditoria(req, 'LOGIN_2FA_FALHA', 'Código 2FA inválido ou expirado');
+            return res.status(401).json({ success: false, error: 'Código inválido ou expirado. Solicite um novo.' });
+        }
+
+        const inputHash  = crypto.createHash('sha256').update(String(code) + email.toLowerCase()).digest('hex');
+        const codeValido = Buffer.from(inputHash).length === Buffer.from(authRecord.code).length
+            && crypto.timingSafeEqual(Buffer.from(inputHash), Buffer.from(authRecord.code));
+
+        if (!codeValido) {
+            const tentativas = (authRecord.tentativas || 0) + 1;
+            if (tentativas >= 3) {
+                await dbRun('DELETE FROM auth_codes WHERE id = ?', [authRecord.id]);
+                req.user = { id: payload.id, nivel: payload.nivel, email };
+                await registrarAuditoria(req, 'LOGIN_2FA_FALHA', 'Bloqueado após 3 tentativas incorretas');
+                return res.status(401).json({ success: false, error: 'Código bloqueado após 3 tentativas. Faça login novamente.' });
+            }
+            await dbRun('UPDATE auth_codes SET tentativas = ? WHERE id = ?', [tentativas, authRecord.id]);
+            return res.status(401).json({ success: false, error: 'Código incorreto.' });
+        }
+
+        await dbRun('DELETE FROM auth_codes WHERE id = ?', [authRecord.id]);
+
+        const usuarioDb = await dbGet('SELECT * FROM usuarios WHERE id = ?', [payload.id]);
+        if (!usuarioDb) return res.status(404).json({ success: false, error: 'Usuário não encontrado.' });
+
+        const token = jwt.sign(
+            { id: usuarioDb.id, email: usuarioDb.email, empresa_cnpj: usuarioDb.empresa_cnpj, nivel: usuarioDb.nivel, nome: usuarioDb.nome },
+            JWT_SECRET,
+            { expiresIn: '12h' }
+        );
+        res.cookie('access_token', token, cookieOptions);
+        req.user = { id: usuarioDb.id, email: usuarioDb.email, nivel: usuarioDb.nivel, nome: usuarioDb.nome };
+        await registrarAuditoria(req, 'LOGIN_2FA_OK', `Login 2FA concluído: ${email}`);
+        res.json({ success: true, user: { nome: usuarioDb.nome, email: usuarioDb.email, empresa_cnpj: usuarioDb.empresa_cnpj, nivel: usuarioDb.nivel } });
+    } catch (error) {
+        console.error('Erro no 2FA verify:', error.message);
+        res.status(500).json({ success: false, error: 'Falha na verificação 2FA.' });
     }
 });
 
@@ -152,6 +267,8 @@ router.post('/google', authLimiter, async (req, res) => {
             { expiresIn: '12h' }
         );
         res.cookie('access_token', token, cookieOptions);
+        req.user = { id: usuarioDb.id, email: usuarioDb.email, nivel: usuarioDb.nivel, nome: usuarioDb.nome, empresa_cnpj: usuarioDb.empresa_cnpj };
+        await registrarAuditoria(req, 'LOGIN_GOOGLE', `Login via Google: ${userEmail}`);
         res.json({ success: true, user: { nome: usuarioDb.nome, email: usuarioDb.email, empresa_cnpj: usuarioDb.empresa_cnpj, nivel: usuarioDb.nivel } });
 
     } catch (error) {
@@ -270,7 +387,8 @@ router.post('/verify-code', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post('/logout', (_req, res) => {
+router.post('/logout', autenticarToken, async (req, res) => {
+    await registrarAuditoria(req, 'LOGOUT', `Logout: ${req.user?.email || 'desconhecido'}`);
     const { maxAge: _, ...clearOpts } = cookieOptions;
     res.clearCookie('access_token', clearOpts);
     res.json({ success: true });

@@ -3,7 +3,7 @@ const router  = express.Router();
 
 const { db, dbGet, dbAll, dbRun } = require('../database/db');
 const { autenticarToken } = require('../middleware/auth');
-const { safeError } = require('../utils/helpers');
+const { safeError, registrarAuditoria } = require('../utils/helpers');
 
 // GET /api/empresa/me
 router.get('/me', autenticarToken, async (req, res) => {
@@ -105,7 +105,7 @@ router.patch('/equipe/:id/permissoes', autenticarToken, async (req, res) => {
         if (live_excel !== undefined) novasPerms.live_excel = !!live_excel;
         if (historico  !== undefined) novasPerms.historico  = !!historico;
         await dbRun('UPDATE usuarios SET permissoes = ? WHERE id = ?', [JSON.stringify(novasPerms), operadorId]);
-        console.log(`🔧 [Equipe] Permissões de "${alvo.nome}" atualizadas por ${req.user.email}: ${JSON.stringify(novasPerms)}`);
+        await registrarAuditoria(req, 'PERMISSAO_ALTERADA', `Permissões de "${alvo.nome}" (ID ${operadorId}) atualizadas: ${JSON.stringify(novasPerms)}`);
         res.json({ success: true, message: `Permissões de ${alvo.nome} atualizadas.`, permissoes: novasPerms });
     } catch (error) {
         console.error('❌ [Empresa/Permissões] Erro:', error.message);
@@ -141,7 +141,7 @@ router.delete('/equipe/:id', autenticarToken, async (req, res) => {
         } catch (txErr) { try { await conn.rollback(); } catch (_) {} throw txErr; }
         finally { conn.release(); }
 
-        console.log(`🗑️  [Equipe] Operador "${alvo.nome}" removido por ${req.user.email}`);
+        await registrarAuditoria(req, 'USUARIO_REMOVIDO', `Operador "${alvo.nome}" (ID ${operadorId}, ${alvo.nivel}) removido da equipe`);
         res.json({ success: true, message: `Operador ${alvo.nome} removido com sucesso. Vaga liberada.` });
     } catch (error) {
         console.error('❌ [Empresa/Remove] Erro:', error.message);

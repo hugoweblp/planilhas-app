@@ -170,4 +170,55 @@ router.patch('/empresas/:cnpj/modulos', autenticarToken, autenticarMaster, async
     }
 });
 
+// GET /api/admin/auditoria — logs completos para o master
+// Filtros opcionais: ?empresa_cnpj=&tipo=&usuario_id=&de=YYYY-MM-DD&ate=YYYY-MM-DD&limit=50&offset=0
+router.get('/auditoria', autenticarToken, autenticarMaster, async (req, res) => {
+    try {
+        const { empresa_cnpj, tipo, usuario_id, de, ate, limit = 50, offset = 0 } = req.query;
+        const conditions = [];
+        const params     = [];
+
+        if (empresa_cnpj) { conditions.push('h.empresa_cnpj = ?');  params.push(empresa_cnpj); }
+        if (tipo)          { conditions.push('h.tipo_acao = ?');      params.push(tipo); }
+        if (usuario_id)    { conditions.push('h.usuario_id = ?');     params.push(usuario_id); }
+        if (de)            { conditions.push('h.data_hora >= ?');     params.push(`${de} 00:00:00`); }
+        if (ate)           { conditions.push('h.data_hora <= ?');     params.push(`${ate} 23:59:59`); }
+
+        const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const safeLimit  = Math.min(Math.max(parseInt(limit)  || 50,  1), 200);
+        const safeOffset = Math.max(parseInt(offset) || 0, 0);
+
+        const [logs, [{ total }]] = await Promise.all([
+            dbAll(
+                `SELECT h.id, h.tipo_acao, h.detalhes, h.data_hora, h.ip_address,
+                        h.usuario_id, h.usuario_nome, h.usuario_nivel,
+                        h.empresa_cnpj, h.chave_nota,
+                        ec.razao_social as empresa_nome
+                 FROM historico_acoes h
+                 LEFT JOIN empresas_contratantes ec ON ec.cnpj = h.empresa_cnpj
+                 ${where}
+                 ORDER BY h.data_hora DESC
+                 LIMIT ? OFFSET ?`,
+                [...params, safeLimit, safeOffset]
+            ),
+            dbAll(`SELECT COUNT(*) as total FROM historico_acoes h ${where}`, params)
+        ]);
+
+        res.json({ success: true, total, logs });
+    } catch (error) {
+        console.error('❌ [Auditoria] Erro:', error.message);
+        res.status(500).json({ success: false, error: safeError(error) });
+    }
+});
+
+// GET /api/admin/auditoria/tipos — lista os tipos de ação distintos (para o filtro do frontend)
+router.get('/auditoria/tipos', autenticarToken, autenticarMaster, async (req, res) => {
+    try {
+        const tipos = await dbAll('SELECT DISTINCT tipo_acao FROM historico_acoes ORDER BY tipo_acao ASC', []);
+        res.json({ success: true, tipos: tipos.map(t => t.tipo_acao) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: safeError(error) });
+    }
+});
+
 module.exports = router;

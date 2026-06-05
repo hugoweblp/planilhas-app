@@ -12,7 +12,7 @@ const { gerarReciboWord } = require('../modules/wordGenerator');
 const { humanizarDadosIA, humanizarCampoIA } = require('../services/aiService');
 const { autenticarToken, verificarPermissao, verificarModulo } = require('../middleware/auth');
 const { rlsMiddleware } = require('../middleware/rls');
-const { checkAssinatura, safeError, getEscolaPath, ROOT_DIR } = require('../utils/helpers');
+const { checkAssinatura, safeError, getEscolaPath, registrarAuditoria, ROOT_DIR } = require('../utils/helpers');
 const { MODULOS_DEFAULT } = require('../config/app');
 
 // Configuração do Multer
@@ -80,6 +80,7 @@ router.post('/upload', autenticarToken, verificarPermissao('live_excel'), upload
             }
         }
 
+        await registrarAuditoria(req, 'XML_UPLOAD', `${notasProcessadas.length} XML(s) processado(s), ${falhas.length} falha(s)`);
         res.json({ success: true, count: notasProcessadas.length, falhas, escolasNovas, notas: notasProcessadas });
     } catch (error) {
         console.error('❌ ERRO GERAL NO UPLOAD:', error);
@@ -136,10 +137,7 @@ router.post('/generate', autenticarToken, verificarPermissao('live_excel'), asyn
             req.user.empresa_cnpj, cleanCnpjEscola, 'PENDENTE', excelRelative, wordRelative
         ]);
 
-        await dbRun(
-            'INSERT INTO historico_acoes (chave_nota, tipo_acao, detalhes, empresa_cnpj) VALUES (?, ?, ?, ?)',
-            [dadosParaGerar.nota.chave, 'GERACAO', `Kit gerado para a escola ${cleanCnpjEscola}`, req.user.empresa_cnpj]
-        );
+        await registrarAuditoria(req, 'PLANILHA_GERADA', `Kit PDDE gerado — Escola: ${cleanCnpjEscola} | NF: ${dadosParaGerar.nota.numero}`, dadosParaGerar.nota.chave);
 
         res.json({
             success: true,

@@ -346,6 +346,42 @@
             </div>
 
             <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: 2FA ADMIN                            -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-2fa" class="view" style="display:none;">
+                <button id="btn-2fa-back" class="back-link">
+                    <i data-lucide="arrow-left"></i> Voltar
+                </button>
+
+                <div class="view-header">
+                    <h2>Verificação de segurança</h2>
+                    <p id="2fa-subtitle">Um código foi enviado ao seu e-mail de administrador. Insira-o abaixo para concluir o acesso.</p>
+                </div>
+
+                <div id="2fa-error" class="alert"></div>
+
+                <form id="2fa-form">
+                    <div class="form-group">
+                        <label>Código de verificação</label>
+                        <input type="text" id="2fa-code" class="otp-input"
+                            placeholder="000000" maxlength="6" required autocomplete="one-time-code"
+                            inputmode="numeric">
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-2fa-verify">
+                        <span>Confirmar e entrar</span>
+                        <i data-lucide="shield-check" class="arrow-icon-2fa"></i>
+                        <i data-lucide="loader" class="spinner spinner-2fa"></i>
+                    </button>
+                </form>
+
+                <p style="text-align:center; margin-top:18px;">
+                    <button id="btn-2fa-resend" class="text-link" style="font-size:12px; color:var(--text-muted);">
+                        <i data-lucide="refresh-cw"></i> Reenviar código
+                    </button>
+                </p>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
             <!-- VIEW: NOVO VÍNCULO / CADASTRO              -->
             <!-- ══════════════════════════════════════════ -->
             <div id="view-cadastro" class="view" style="display:none;">
@@ -460,6 +496,30 @@
             } catch (e) { return true; }
         }
 
+        // ── 2FA — estado ──────────────────────────────────────
+        let twoFATempToken = null;
+
+        async function send2FACode() {
+            try {
+                await axios.post(`${API_URL}/auth/2fa/request`, { tempToken: twoFATempToken });
+            } catch (_) { /* silencia — o OTP pode ter sido enviado mesmo com erro de rede */ }
+        }
+
+        async function initiate2FA(tempToken, user) {
+            twoFATempToken = tempToken;
+            const sub = document.getElementById('2fa-subtitle');
+            if (sub && user?.email) {
+                const masked = user.email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + '*'.repeat(Math.min(b.length, 5)) + c);
+                sub.innerText = `Um código foi enviado para ${masked}. Insira-o abaixo para concluir o acesso.`;
+            }
+            showView('2fa');
+            document.getElementById('2fa-code').value = '';
+            document.getElementById('2fa-error').style.display = 'none';
+            await send2FACode();
+            lucide.createIcons();
+            setTimeout(() => document.getElementById('2fa-code').focus(), 100);
+        }
+
         // ── LOGIN COM SENHA (Admin) ────────────────────────────
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
@@ -475,6 +535,10 @@
 
             try {
                 const response = await axios.post(`${API_URL}/auth/login`, { usuario, senha });
+                if (response.data.requires2FA) {
+                    await initiate2FA(response.data.tempToken, response.data.user);
+                    return;
+                }
                 if (response.data.success) {
                     localStorage.setItem('user', JSON.stringify(response.data.user));
                     redirect(response.data.user);
@@ -488,6 +552,59 @@
                 btn.querySelector('.arrow-icon').style.display = 'inline-block';
             }
         };
+
+        // ── 2FA — verificar código ─────────────────────────────
+        document.getElementById('2fa-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('2fa-code').value.trim();
+            const btn  = document.getElementById('btn-2fa-verify');
+            const err  = document.getElementById('2fa-error');
+
+            err.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner-2fa').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-2fa').style.display = 'none';
+
+            try {
+                const res = await axios.post(`${API_URL}/auth/2fa/verify`, { tempToken: twoFATempToken, code });
+                if (res.data.success) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    redirect(res.data.user);
+                }
+            } catch (error) {
+                err.style.display = 'block';
+                err.innerText = error.response?.data?.error || 'Código incorreto ou expirado.';
+                document.getElementById('2fa-code').value = '';
+                document.getElementById('2fa-code').focus();
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-2fa').style.display = 'none';
+                btn.querySelector('.arrow-icon-2fa').style.display = 'inline-block';
+            }
+        };
+
+        // ── 2FA — reenviar código ──────────────────────────────
+        document.getElementById('btn-2fa-resend').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-2fa-resend');
+            const err = document.getElementById('2fa-error');
+            btn.disabled = true;
+            err.style.display = 'none';
+            try {
+                await send2FACode();
+                const ok = document.createElement('div');
+                ok.className = 'success-inline';
+                ok.style.marginTop = '12px';
+                ok.innerHTML = '<i data-lucide="mail-check"></i> Novo código enviado!';
+                btn.parentElement.appendChild(ok);
+                lucide.createIcons();
+                setTimeout(() => ok.remove(), 4000);
+            } catch (_) {
+                err.style.display = 'block';
+                err.innerText = 'Não foi possível reenviar o código. Tente novamente.';
+            } finally {
+                setTimeout(() => { btn.disabled = false; }, 30000);
+            }
+        });
 
         // ── CÓDIGO OTP ─────────────────────────────────────────
         const otpError = document.getElementById('otp-error');
@@ -688,6 +805,7 @@
         document.getElementById('btn-show-otp').addEventListener('click', () => showView('otp'));
         document.getElementById('btn-otp-back').addEventListener('click', () => showView('main'));
         document.getElementById('btn-admin-back').addEventListener('click', () => showView('main'));
+        document.getElementById('btn-2fa-back').addEventListener('click', () => { twoFATempToken = null; showView('admin'); });
         document.getElementById('btn-cadastro-back').addEventListener('click', () => { showView('main'); pendingGoogleCredential = null; });
         const btnFooterAdmin = document.getElementById('btn-footer-admin');
         btnFooterAdmin.addEventListener('click', () => showView('admin'));

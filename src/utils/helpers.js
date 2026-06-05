@@ -88,4 +88,26 @@ async function migrarCpfParaCriptografado() {
     }
 }
 
-module.exports = { checkAssinatura, safeError, sanitizeNota, getEscolaPath, migrarCpfParaCriptografado, ROOT_DIR };
+/**
+ * Registra uma ação de auditoria no historico_acoes.
+ * Nunca quebra o fluxo principal — erros são silenciados internamente.
+ * @param {import('express').Request} req
+ * @param {string} tipo  - ex: 'LOGIN_SENHA', 'PLANILHA_GERADA'
+ * @param {string} detalhes
+ * @param {string|null} chaveNota
+ */
+async function registrarAuditoria(req, tipo, detalhes, chaveNota = null) {
+    try {
+        const user       = req.user || {};
+        const ip         = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'desconhecido';
+        const empresa    = user.empresa_cnpj || null;
+        await dbRun(
+            `INSERT INTO historico_acoes
+             (chave_nota, tipo_acao, detalhes, empresa_cnpj, usuario_id, usuario_nome, usuario_nivel, ip_address)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [chaveNota, tipo, detalhes, empresa, user.id || null, user.nome || user.email || null, user.nivel || null, ip]
+        );
+    } catch (_) {}
+}
+
+module.exports = { checkAssinatura, safeError, sanitizeNota, getEscolaPath, migrarCpfParaCriptografado, registrarAuditoria, ROOT_DIR };

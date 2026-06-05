@@ -182,6 +182,11 @@ async function inicializarBanco() {
             "ALTER TABLE notas ADD COLUMN entregue_qtd INT DEFAULT 0",
             "ALTER TABLE notas ADD COLUMN arquivo_word TEXT NULL",
             "ALTER TABLE escolas ADD COLUMN municipio VARCHAR(100) NULL",
+            // 2FA + Auditoria Completa
+            "ALTER TABLE historico_acoes ADD COLUMN usuario_id INT NULL",
+            "ALTER TABLE historico_acoes ADD COLUMN usuario_nome VARCHAR(100) NULL",
+            "ALTER TABLE historico_acoes ADD COLUMN usuario_nivel VARCHAR(20) NULL",
+            "ALTER TABLE historico_acoes ADD COLUMN ip_address VARCHAR(45) NULL",
             "ALTER TABLE escolas ADD COLUMN uf VARCHAR(5) NULL"
         ];
         for (let alterSql of alters) {
