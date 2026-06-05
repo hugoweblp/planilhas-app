@@ -6,6 +6,7 @@ const { NIVEIS_MASTER } = require('../constants/niveis');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
 const { safeError } = require('../utils/helpers');
 const { MODULOS_DEFAULT } = require('../config/app');
+const { consultarCNPJ } = require('../services/cnpjService');
 
 // GET /api/admin/stats
 router.get('/stats', autenticarToken, autenticarMaster, async (req, res) => {
@@ -216,6 +217,23 @@ router.get('/auditoria/tipos', autenticarToken, autenticarMaster, async (req, re
     try {
         const tipos = await dbAll('SELECT DISTINCT tipo_acao FROM historico_acoes ORDER BY tipo_acao ASC', []);
         res.json({ success: true, tipos: tipos.map(t => t.tipo_acao) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: safeError(error) });
+    }
+});
+
+// GET /api/admin/cnpj/:cnpj — consulta BrasilAPI com cache em memória
+router.get('/cnpj/:cnpj', autenticarToken, autenticarMaster, async (req, res) => {
+    try {
+        const cnpj = req.params.cnpj.replace(/\D/g, '').padStart(14, '0');
+        if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj))
+            return res.status(400).json({ success: false, error: 'CNPJ inválido.' });
+
+        const dados = await consultarCNPJ(cnpj);
+        if (!dados)
+            return res.status(404).json({ success: false, error: 'CNPJ não encontrado na Receita Federal.' });
+
+        res.json({ success: true, dados });
     } catch (error) {
         res.status(500).json({ success: false, error: safeError(error) });
     }

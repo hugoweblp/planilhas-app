@@ -485,6 +485,15 @@
             font-size: 0.85rem;
         }
 
+        /* CNPJ auto-fill hint */
+        .cnpj-hint {
+            font-size: 0.72rem; margin-top: 5px; min-height: 16px;
+            padding-left: 2px; transition: color 0.2s;
+        }
+        .cnpj-hint.loading { color: var(--dim); }
+        .cnpj-hint.ok      { color: var(--success); }
+        .cnpj-hint.erro    { color: var(--primary); }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to   { opacity: 1; transform: translateY(0);    }
@@ -720,7 +729,8 @@
         <div class="form-grid" id="form-novo">
             <div class="field span2">
                 <label>CNPJ</label>
-                <input type="text" id="n-cnpj" placeholder="00.000.000/0000-00" maxlength="18" />
+                <input type="text" id="n-cnpj" placeholder="00.000.000/0000-00" maxlength="18" autocomplete="off" />
+                <div id="cnpj-hint" class="cnpj-hint"></div>
             </div>
             <div class="field span2">
                 <label>Razão Social</label>
@@ -1343,6 +1353,54 @@
     }
 
     carregarTiposAuditoria();
+
+    // ── CNPJ AUTO-FILL ───────────────────────────────────────────
+    (function () {
+        const inputCnpj = document.getElementById('n-cnpj');
+        const hint      = document.getElementById('cnpj-hint');
+        let debounceTimer = null;
+
+        function mascararCnpj(v) {
+            return v.replace(/\D/g, '').slice(0, 14)
+                .replace(/(\d{2})(\d)/, '$1.$2')
+                .replace(/(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                .replace(/(\d{4})(\d)/, '$1-$2');
+        }
+
+        inputCnpj.addEventListener('input', () => {
+            inputCnpj.value = mascararCnpj(inputCnpj.value);
+            const digits = inputCnpj.value.replace(/\D/g, '');
+
+            hint.className = 'cnpj-hint';
+            hint.textContent = '';
+            clearTimeout(debounceTimer);
+
+            if (digits.length < 14) return;
+
+            hint.className = 'cnpj-hint loading';
+            hint.textContent = 'Consultando Receita Federal...';
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const data = await api(`/api/admin/cnpj/${digits}`);
+                    if (!data.success || !data.dados) {
+                        hint.className = 'cnpj-hint erro';
+                        hint.textContent = 'CNPJ não encontrado na Receita Federal.';
+                        return;
+                    }
+                    const d = data.dados;
+                    document.getElementById('n-razao').value = d.razao_social || '';
+                    if (d.email) document.getElementById('n-email').value = d.email;
+                    hint.className = 'cnpj-hint ok';
+                    hint.textContent = `✓ ${d.razao_social}${d.municipio ? ' — ' + d.municipio + '/' + d.uf : ''}`;
+                } catch (e) {
+                    hint.className = 'cnpj-hint erro';
+                    hint.textContent = e.response?.data?.error || 'Falha ao consultar CNPJ.';
+                }
+            }, 500);
+        });
+    })();
 </script>
 </body>
 </html>
