@@ -82,7 +82,7 @@ router.post('/save-signature', authLimiter, async (req, res) => {
         await fs.promises.writeFile(path.join(sigDir, fileName), base64Data, 'base64');
 
         await dbRun(
-            "UPDATE notas SET status = 'ASSINADO', assinatura_path = ?, assinada_em = CURRENT_TIMESTAMP, entregue_qtd = entregue_qtd + 1 WHERE signature_token = ?",
+            "UPDATE notas SET status = 'ASSINADO', assinatura_path = ?, assinada_em = CURRENT_TIMESTAMP, entregue_qtd = entregue_qtd + 1, signature_token = NULL, signature_token_expira_em = NULL WHERE signature_token = ?",
             [fileName, token]
         );
         for (const nota of notasDoToken) {
