@@ -60,24 +60,9 @@ router.post('/upload', autenticarToken, verificarPermissao('live_excel'), upload
         if (notasProcessadas.length === 0)
             return res.status(400).json({ success: false, error: 'Nenhum XML válido foi encontrado no lote.', falhas });
 
-        let escolasNovas = 0;
         for (const nota of notasProcessadas) {
-            const cnpjEscola = String(nota.comprador.cnpj).replace(/\D/g, '').padStart(14, '0');
             const notaInDb = await dbGet('SELECT chave FROM notas WHERE chave = ? AND cnpj_vendedor = ?', [nota.nota.chave, req.user.empresa_cnpj]);
             nota.duplicada = !!notaInDb;
-
-            try {
-                await dbRun(
-                    `INSERT INTO escolas (cnpj, razao_social, logradouro, municipio, uf, empresa_dona_cnpj)
-                     VALUES (?, ?, ?, ?, ?, ?)
-                     ON DUPLICATE KEY UPDATE razao_social = VALUES(razao_social), logradouro = VALUES(logradouro),
-                         municipio = VALUES(municipio), uf = VALUES(uf)`,
-                    [cnpjEscola, nota.comprador.nome, nota.comprador.logradouro, nota.comprador.municipio, nota.comprador.uf, req.user.empresa_cnpj]
-                );
-                escolasNovas++;
-            } catch (e) {
-                console.error(`[upload] Falha ao salvar escola ${cnpjEscola}:`, e.message);
-            }
         }
 
         await registrarAuditoria(req, 'XML_UPLOAD', `${notasProcessadas.length} XML(s) processado(s), ${falhas.length} falha(s)`);

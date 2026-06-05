@@ -3,6 +3,7 @@ const router  = express.Router();
 
 const { db, dbGet, dbAll, dbRun } = require('../database/db');
 const { autenticarToken } = require('../middleware/auth');
+const { NIVEIS_MASTER } = require('../constants/niveis');
 const { safeError, registrarAuditoria } = require('../utils/helpers');
 
 // GET /api/empresa/me
@@ -55,7 +56,7 @@ router.get('/me', autenticarToken, async (req, res) => {
 router.get('/equipe', autenticarToken, async (req, res) => {
     try {
         const { empresa_cnpj, nivel } = req.user;
-        if (nivel !== 'gestor' && nivel !== 'admin' && nivel !== 'super_admin')
+        if (!NIVEIS_MASTER.includes(nivel) && nivel !== 'gestor')
             return res.status(403).json({ success: false, error: 'Apenas o Gestor Master pode gerenciar a equipe.' });
 
         const operadores = await dbAll(
@@ -84,7 +85,7 @@ router.patch('/equipe/:id/permissoes', autenticarToken, async (req, res) => {
         const { empresa_cnpj, nivel, id: meuId } = req.user;
         const operadorId = parseInt(req.params.id);
 
-        if (nivel !== 'gestor' && nivel !== 'admin' && nivel !== 'super_admin')
+        if (!NIVEIS_MASTER.includes(nivel) && nivel !== 'gestor')
             return res.status(403).json({ success: false, error: 'Apenas o Gestor Master pode alterar permissões.' });
         if (operadorId === meuId)
             return res.status(400).json({ success: false, error: 'Você não pode alterar suas próprias permissões.' });
@@ -119,7 +120,7 @@ router.delete('/equipe/:id', autenticarToken, async (req, res) => {
         const { empresa_cnpj, nivel, id: meuId } = req.user;
         const operadorId = parseInt(req.params.id);
 
-        if (nivel !== 'gestor' && nivel !== 'admin')
+        if (!NIVEIS_MASTER.includes(nivel) && nivel !== 'gestor')
             return res.status(403).json({ success: false, error: 'Apenas o Gestor Master pode remover operadores.' });
         if (operadorId === meuId)
             return res.status(400).json({ success: false, error: 'Você não pode remover a si mesmo da equipe.' });

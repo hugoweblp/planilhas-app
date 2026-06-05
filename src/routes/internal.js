@@ -10,7 +10,7 @@ const { autenticarToken, autenticarMaster } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/limiters');
 const appConfig = require('../config/app');
 const { ADMIN_EMAIL, cookieOptions } = appConfig;
-const { ROOT_DIR } = require('../utils/helpers');
+const { ROOT_DIR, registrarAuditoria } = require('../utils/helpers');
 
 // POST /api/internal/verify-master-key
 router.post('/verify-master-key', authLimiter, async (req, res) => {
@@ -43,6 +43,8 @@ router.post('/verify-master-key', authLimiter, async (req, res) => {
             { expiresIn: '12h' }
         );
         res.cookie('access_token', token, cookieOptions);
+        req.user = { id: adminUser.id, email: adminUser.email, nivel: adminUser.nivel, nome: adminUser.nome, empresa_cnpj: null };
+        await registrarAuditoria(req, 'LOGIN_MASTER_KEY', `Acesso root via Master Key: ${adminUser.email}`);
         res.json({ success: true, nome: adminUser.nome });
     } catch (error) {
         console.error('❌ Erro na verificação da master key:', error.message);
@@ -67,10 +69,7 @@ router.post('/debug-account', autenticarToken, async (req, res) => {
             { expiresIn: '2h' }
         );
 
-        await dbRun(
-            'INSERT INTO historico_acoes (tipo_acao, empresa_cnpj, detalhes) VALUES (?, ?, ?)',
-            ['IMPERSONATION', id_target, `Admin ${req.user.email} (ID:${req.user.id}) simulou empresa ${id_target} (user: ${targetUser.email}) | IP: ${req.ip}`]
-        ).catch(e => console.error('[AUDIT] Falha ao registrar impersonation:', e.message));
+        await registrarAuditoria(req, 'IMPERSONATION', `Admin simulou empresa ${id_target} (user: ${targetUser.email})`);
 
         const { senha: _, ...safeMeta } = targetUser;
         res.json({ success: true, s_token: token, u_meta: { ...safeMeta, nome: `[SYS] ${targetUser.nome}` } });

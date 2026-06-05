@@ -12,7 +12,7 @@ const { registrarUsuario, autenticarUsuario } = require('../services/authService
 const { enviarCodigoAcesso } = require('../services/mailService');
 const { checkAssinatura, safeError, registrarAuditoria } = require('../utils/helpers');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/limiters');
+const { authLimiter, twoFALimiter } = require('../middleware/limiters');
 const { JWT_SECRET, ADMIN_EMAIL, cookieOptions } = require('../config/app');
 
 // GET /api/auth/config — config pública para o frontend (nunca expõe segredos)
@@ -60,7 +60,7 @@ router.post('/login', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/2fa/request — envia OTP para o e-mail do master após senha correta
-router.post('/2fa/request', authLimiter, async (req, res) => {
+router.post('/2fa/request', twoFALimiter, async (req, res) => {
     try {
         const { tempToken } = req.body;
         if (!tempToken) return res.status(400).json({ success: false, error: 'Token temporário ausente.' });
@@ -97,7 +97,7 @@ router.post('/2fa/request', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/2fa/verify — valida OTP e emite JWT real para o master
-router.post('/2fa/verify', authLimiter, async (req, res) => {
+router.post('/2fa/verify', twoFALimiter, async (req, res) => {
     try {
         const { tempToken, code } = req.body;
         if (!tempToken || !code) return res.status(400).json({ success: false, error: 'Dados incompletos.' });

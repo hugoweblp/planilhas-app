@@ -922,8 +922,8 @@
 
     async function sair() {
         await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-        localStorage.removeItem('user');
-        window.location.href = 'sys-auth-verify.html';
+        localStorage.clear();
+        window.location.href = 'login.html';
     }
 
     // ── Load Stats ───────────────────────────────────────────────

@@ -5,6 +5,7 @@ const router = express.Router();
 
 const { dbGet } = require('../database/db');
 const { autenticarToken } = require('../middleware/auth');
+const { NIVEIS_MASTER } = require('../constants/niveis');
 const { safeError, ROOT_DIR } = require('../utils/helpers');
 
 // GET /output/* — serve arquivos com autenticação + RLS por tenant
@@ -17,7 +18,7 @@ router.get('/*', autenticarToken, async (req, res) => {
         const outputDir  = path.resolve(path.join(ROOT_DIR, 'output'));
         if (!filepath.startsWith(outputDir)) return res.status(403).json({ error: 'Forbidden' });
 
-        const isAdmin  = req.user.nivel === 'admin';
+        const isAdmin  = NIVEIS_MASTER.includes(req.user.nivel);
         const userCnpj = String(req.user.empresa_cnpj || '').replace(/\D/g, '').padStart(14, '0');
 
         if (filename.startsWith('assinaturas/')) {

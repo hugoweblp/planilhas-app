@@ -100,7 +100,7 @@ router.post('/notas/sign/:chave', autenticarToken, rlsMiddleware, async (req, re
     try {
         const { chave } = req.params;
         const result = await dbRun(
-            `UPDATE notas SET status = ? WHERE chave = ? ${req.rls.clause('cnpj_vendedor')}`,
+            `UPDATE notas SET status = ?, assinada_em = CURRENT_TIMESTAMP WHERE chave = ? ${req.rls.clause('cnpj_vendedor')}`,
             ['ASSINADO', chave, ...req.rls.param()]
         );
         if (!req.rls.isAdmin && result.changes === 0)
@@ -171,7 +171,7 @@ router.get('/notas/:id/entregas', autenticarToken, rlsMiddleware, async (req, re
             [id, ...req.rls.param()]
         );
         if (!notaDono) return res.status(403).json({ success: false, error: 'Acesso negado.' });
-        const entregas = await dbAll('SELECT * FROM entregas WHERE chave_nota = ? ORDER BY data_hora DESC', [id]);
+        const entregas = await dbAll('SELECT * FROM entregas WHERE chave_nota = ? ORDER BY id DESC', [id]);
         res.json({ success: true, entregas });
     } catch (error) {
         res.status(500).json({ success: false, error: safeError(error) });
