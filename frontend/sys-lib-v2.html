@@ -485,6 +485,10 @@
             font-size: 0.85rem;
         }
 
+        tbody tr[data-row-cnpj]:hover td {
+            background: rgba(255,255,255,0.03);
+        }
+
         /* CNPJ auto-fill hint */
         .cnpj-hint {
             font-size: 0.72rem; margin-top: 5px; min-height: 16px;
@@ -976,7 +980,7 @@
             const barClass = pct >= 100 ? 'full' : pct >= 80 ? 'near' : '';
 
             return `
-            <tr>
+            <tr data-row-cnpj="${escapeHtml(e.cnpj)}" style="cursor:pointer;">
                 <td>
                     <div class="nome-razao">${escapeHtml(e.razao_social || '—')}</div>
                     <div class="cnpj-mono">${fmtCNPJ(e.cnpj)}</div>
@@ -996,14 +1000,11 @@
                     ${vencendoBadge(e.validade_assinatura)}
                 </td>
                 <td>${badgeStatus(e.status_assinatura)}</td>
-                <td>
+                <td onclick="event.stopPropagation()">
                     <div class="actions" style="justify-content:center;">
                         <a href="index.html?simular=${escapeHtml(e.cnpj)}" class="btn-icon success" title="Simular Acesso" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">
                             <i data-lucide="play" style="width:15px;"></i>
                         </a>
-                        <button class="btn-icon" title="Ver detalhes" data-ver-cnpj="${escapeHtml(e.cnpj)}">
-                            <i data-lucide="eye" style="width:15px;"></i>
-                        </button>
                         <button class="btn-icon" title="Editar" data-edit-cnpj="${escapeHtml(e.cnpj)}">
                             <i data-lucide="pencil" style="width:15px;"></i>
                         </button>
@@ -1320,12 +1321,17 @@
     document.getElementById('btn-confirm-del').addEventListener('click', () => confirmarDelete());
 
     document.getElementById('table-body').addEventListener('click', e => {
+        // Action buttons (last column has stopPropagation on the td)
         const btn = e.target.closest('button');
-        if (!btn) return;
-        if (btn.dataset.verCnpj)    { verDetalhe(btn.dataset.verCnpj); return; }
-        if (btn.dataset.editCnpj)   { abrirEditar(btn.dataset.editCnpj); return; }
-        if (btn.dataset.toggleCnpj) { toggleStatus(btn.dataset.toggleCnpj, btn.dataset.toggleStatus); return; }
-        if (btn.dataset.delCnpj)    { abrirDelete(btn.dataset.delCnpj, btn.dataset.delRazao); }
+        if (btn) {
+            if (btn.dataset.editCnpj)   { abrirEditar(btn.dataset.editCnpj); return; }
+            if (btn.dataset.toggleCnpj) { toggleStatus(btn.dataset.toggleCnpj, btn.dataset.toggleStatus); return; }
+            if (btn.dataset.delCnpj)    { abrirDelete(btn.dataset.delCnpj, btn.dataset.delRazao); return; }
+            return;
+        }
+        // Row click → open detail panel
+        const tr = e.target.closest('tr[data-row-cnpj]');
+        if (tr) verDetalhe(tr.dataset.rowCnpj);
     });
 
     // ── AUDIT BADGE ───────────────────────────────────────────────
