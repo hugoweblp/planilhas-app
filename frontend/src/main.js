@@ -706,16 +706,18 @@ window.baixarLoteSelecionado = async () => {
     if (modal) {
         modal.dataset.notaId = selectedChaves.join(',');
         modal.dataset.isBulk = 'true';
-        
+
         // Reset modal
         document.getElementById('link-display-area').style.display = 'none';
+        document.getElementById('generated-link-input').value = '';
         document.getElementById('rec-nome').value = '';
         document.getElementById('rec-cpf').value = '';
         document.getElementById('rec-whatsapp').value = '';
         const btn = document.getElementById('btn-send-sig');
-        btn.innerText = 'Enviar Link de Assinatura (Lote)';
+        btn.innerHTML = '<i data-lucide="send" style="width:16px;"></i> Enviar Link via WhatsApp (Lote)';
+        btn.style.background = '';
         btn.disabled = false;
-        
+
         modal.classList.add('active');
     }
 };
@@ -1696,11 +1698,12 @@ window.baixarKit = async (id, status) => {
             modal.dataset.notaId = id;
             // Limpa o estado anterior
             document.getElementById('link-display-area').style.display = 'none';
+            document.getElementById('generated-link-input').value = '';
             document.getElementById('rec-nome').value = '';
             document.getElementById('rec-cpf').value = '';
             document.getElementById('rec-whatsapp').value = '';
             const btn = document.getElementById('btn-send-sig');
-            btn.innerText = 'Enviar Link de Assinatura';
+            btn.innerHTML = '<i data-lucide="send" style="width:16px;"></i> Enviar Link via WhatsApp';
             btn.style.background = '';
             btn.disabled = false;
             
@@ -1781,57 +1784,73 @@ window.viewSignature = async function(sigPath) {
 /**
  * Envia a solicitação de assinatura para o recebedor
  */
+function _abrirWhatsApp(nome, whatsapp, link) {
+    const digits = whatsapp.replace(/\D/g, '');
+    const telefone = digits.startsWith('55') ? digits : '55' + digits;
+    const mensagem =
+        `Olá ${nome}! Segue o link para assinatura das planilhas PDDE:\n\n` +
+        `${link}\n\n` +
+        `Acesse, leia os documentos e assine com o dedo. O link expira em 48 horas.`;
+    window.open(`https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
 window.enviarSolicitacaoAssinatura = async () => {
     const modal = document.getElementById('signature-request-modal');
     const id = modal.dataset.notaId;
-    
-    const data = {
-        recebedor_nome: document.getElementById('rec-nome').value,
-        recebedor_cpf: document.getElementById('rec-cpf').value,
-        recebedor_whatsapp: document.getElementById('rec-whatsapp').value
-    };
 
-    if (!data.recebedor_nome || !data.recebedor_cpf || !data.recebedor_whatsapp) {
+    const nome     = document.getElementById('rec-nome').value.trim();
+    const cpf      = document.getElementById('rec-cpf').value.trim();
+    const whatsapp = document.getElementById('rec-whatsapp').value.trim();
+
+    if (!nome || !cpf || !whatsapp) {
         alert('Por favor, preencha todos os dados do recebedor.');
         return;
     }
 
+    // Se o link já foi gerado, apenas reabre o WhatsApp
+    const linkGerado = document.getElementById('generated-link-input').value;
+    if (linkGerado) {
+        _abrirWhatsApp(nome, whatsapp, linkGerado);
+        return;
+    }
+
+    const btn = document.getElementById('btn-send-sig');
     try {
-        const btn = document.getElementById('btn-send-sig');
-        btn.innerText = 'Enviando...';
+        btn.innerText = 'Gerando link...';
         btn.disabled = true;
 
         const isBulk = modal.dataset.isBulk === 'true';
         const endpoint = isBulk ? 'request-signature-bulk' : 'request-signature';
 
-        const payload = { ...data };
+        const payload = { recebedor_nome: nome, recebedor_cpf: cpf, recebedor_whatsapp: whatsapp };
         if (isBulk) payload.chaves = id.split(',');
 
         const response = await axios.post(`${API_URL}/notas/${endpoint}${isBulk ? '' : '/' + id}`, payload);
 
         if (response.data.success) {
             const link = response.data.link;
-            console.log('🔗 LINK DE ASSINATURA GERADO:', link);
-            
-            // Exibe a área do link no modal
+
+            // Exibe área de link (fallback para cópia manual)
             document.getElementById('link-display-area').style.display = 'block';
             document.getElementById('generated-link-input').value = link;
 
-            // Atualiza o botão para estado de espera
-            btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> AGUARDANDO ASSINATURA...';
-            btn.style.background = 'linear-gradient(135deg, #440000, #220000)';
-            
-            // Inicia o Polling
+            // Abre WhatsApp com mensagem pronta
+            _abrirWhatsApp(nome, whatsapp, link);
+
+            // Botão vira "Reenviar"
+            btn.innerHTML = '<i data-lucide="refresh-cw" style="width:16px;"></i> Reenviar via WhatsApp';
+            btn.style.background = '';
+            btn.disabled = false;
+
+            // Inicia polling de status
             iniciarPollingAssinatura(id);
-            
-            // Re-renderiza ícones do Lucide
+
             if (window.lucide) window.lucide.createIcons();
         }
     } catch (error) {
         console.error('Erro ao enviar solicitação:', error);
-        alert('Erro ao enviar link de assinatura.');
-        const btn = document.getElementById('btn-send-sig');
-        btn.innerText = 'Enviar Link de Assinatura';
+        alert('Erro ao gerar link de assinatura.');
+        btn.innerHTML = '<i data-lucide="send" style="width:16px;"></i> Enviar Link via WhatsApp';
         btn.disabled = false;
     }
 };
