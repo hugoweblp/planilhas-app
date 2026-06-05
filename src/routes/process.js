@@ -66,7 +66,7 @@ router.post('/upload', autenticarToken, verificarPermissao('live_excel'), upload
         }
 
         await registrarAuditoria(req, 'XML_UPLOAD', `${notasProcessadas.length} XML(s) processado(s), ${falhas.length} falha(s)`);
-        res.json({ success: true, count: notasProcessadas.length, falhas, escolasNovas, notas: notasProcessadas });
+        res.json({ success: true, count: notasProcessadas.length, falhas, notas: notasProcessadas });
     } catch (error) {
         console.error('❌ ERRO GERAL NO UPLOAD:', error);
         res.status(500).json({ success: false, error: 'Erro interno ao processar o lote de arquivos.' });
