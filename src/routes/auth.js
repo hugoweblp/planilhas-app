@@ -324,7 +324,8 @@ router.post('/verify-code', authLimiter, async (req, res) => {
             return res.status(401).json({ success: false, error: 'Código inválido ou expirado. Solicite um novo acesso.' });
 
         // Verifica código — hash SHA-256 antes de comparar (OTP nunca em plaintext no banco)
-        const inputHash  = crypto.createHash('sha256').update(String(code) + email.toLowerCase()).digest('hex');
+        const cleanCode  = String(code).replace(/\D/g, '').trim();
+        const inputHash  = crypto.createHash('sha256').update(cleanCode + email.toLowerCase()).digest('hex');
         const inputBuf   = Buffer.from(inputHash);
         const storedBuf  = Buffer.from(authRecord.code);
         const codeValido = inputBuf.length === storedBuf.length && crypto.timingSafeEqual(inputBuf, storedBuf);

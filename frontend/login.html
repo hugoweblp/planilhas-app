@@ -641,7 +641,7 @@
             e.preventDefault();
             const email = document.getElementById('otp-email').value;
             const cnpj = document.getElementById('otp-cnpj').value;
-            const code = document.getElementById('otp-code').value;
+            const code = document.getElementById('otp-code').value.replace(/\D/g, '').trim();
             const btn = document.getElementById('btn-verify-otp');
 
             otpError.style.display = 'none';
