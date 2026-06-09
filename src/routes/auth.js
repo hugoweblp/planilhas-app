@@ -297,7 +297,6 @@ router.post('/request-code', authLimiter, async (req, res) => {
         const codigo      = crypto.randomInt(100000, 1000000).toString();
         const codigoHash  = crypto.createHash('sha256').update(codigo + email.toLowerCase()).digest('hex');
         const expiresAt   = new Date(Date.now() + 5 * 60000).toISOString().slice(0, 19).replace('T', ' ');
-        console.log(`[DEBUG request-code] email="${email}" cnpj="${cleanCnpj}" expiresAt="${expiresAt}" codigoEnviado="${codigo}"`);
         await dbRun('INSERT INTO auth_codes (email, cnpj, code, expires_at) VALUES (?, ?, ?, ?)', [email, cleanCnpj, codigoHash, expiresAt]);
         await enviarCodigoAcesso(email, codigo);
         res.json({ success: true, message: 'Código de acesso enviado com sucesso.' });
@@ -321,14 +320,12 @@ router.post('/verify-code', authLimiter, async (req, res) => {
             'SELECT * FROM auth_codes WHERE email = ? AND cnpj = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
             [email, cleanCnpj]
         );
-        console.log(`[DEBUG verify-code] email="${email}" cnpj="${cleanCnpj}" authRecordFound=${!!authRecord}`);
         if (!authRecord)
             return res.status(401).json({ success: false, error: 'Código inválido ou expirado. Solicite um novo acesso.' });
 
         // Verifica código — hash SHA-256 antes de comparar (OTP nunca em plaintext no banco)
         const cleanCode  = String(code).replace(/\D/g, '').trim();
         const inputHash  = crypto.createHash('sha256').update(cleanCode + email.toLowerCase()).digest('hex');
-        console.log(`[DEBUG verify-code] cleanCode="${cleanCode}" codeRaw=${JSON.stringify(code)} inputHash="${inputHash}" storedHash="${authRecord.code}" match=${inputHash === authRecord.code}`);
         const inputBuf   = Buffer.from(inputHash);
         const storedBuf  = Buffer.from(authRecord.code);
         const codeValido = inputBuf.length === storedBuf.length && crypto.timingSafeEqual(inputBuf, storedBuf);

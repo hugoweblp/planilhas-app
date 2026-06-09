@@ -119,7 +119,7 @@ async function inicializarBanco() {
             id INT AUTO_INCREMENT PRIMARY KEY,
             email VARCHAR(100),
             cnpj VARCHAR(20),
-            code VARCHAR(10),
+            code VARCHAR(64),
             expires_at DATETIME,
             criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_email_code (email, code)
@@ -187,7 +187,9 @@ async function inicializarBanco() {
             "ALTER TABLE historico_acoes ADD COLUMN usuario_nome VARCHAR(100) NULL",
             "ALTER TABLE historico_acoes ADD COLUMN usuario_nivel VARCHAR(20) NULL",
             "ALTER TABLE historico_acoes ADD COLUMN ip_address VARCHAR(45) NULL",
-            "ALTER TABLE escolas ADD COLUMN uf VARCHAR(5) NULL"
+            "ALTER TABLE escolas ADD COLUMN uf VARCHAR(5) NULL",
+            // Fix crítico: coluna code estava VARCHAR(10), truncava hash SHA-256 de 64 chars
+            "ALTER TABLE auth_codes MODIFY COLUMN code VARCHAR(64)"
         ];
         for (let alterSql of alters) {
             try {
