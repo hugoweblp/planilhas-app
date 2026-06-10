@@ -8,7 +8,7 @@ const googleOAuth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const { db, dbGet, dbRun } = require('../database/db');
 const { NIVEIS, NIVEIS_MASTER } = require('../constants/niveis');
-const { registrarUsuario, autenticarUsuario } = require('../services/authService');
+const { registrarUsuario, autenticarUsuario, autenticarPorEmail, definirSenha } = require('../services/authService');
 const { enviarCodigoAcesso } = require('../services/mailService');
 const { checkAssinatura, safeError, registrarAuditoria } = require('../utils/helpers');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
@@ -380,10 +380,49 @@ router.post('/verify-code', authLimiter, async (req, res) => {
             { expiresIn: '12h' }
         );
         res.cookie('access_token', token, cookieOptions);
-        res.json({ success: true, user: { nome: usuarioDb.nome, email: usuarioDb.email, empresa_cnpj: usuarioDb.empresa_cnpj, nivel: usuarioDb.nivel } });
+        const needsPassword = !usuarioDb.senha;
+        res.json({ success: true, needsPassword, user: { nome: usuarioDb.nome, email: usuarioDb.email, empresa_cnpj: usuarioDb.empresa_cnpj, nivel: usuarioDb.nivel } });
     } catch (error) {
         console.error('Erro na Validação OTP:', error.message);
         res.status(500).json({ success: false, error: 'Falha na validação do código.' });
+    }
+});
+
+// POST /api/auth/login-email — login por e-mail + senha (usuários não-Google)
+router.post('/login-email', authLimiter, async (req, res) => {
+    try {
+        const { email, senha } = req.body;
+        if (!email || !senha) return res.status(400).json({ success: false, error: 'E-mail e senha são obrigatórios.' });
+
+        const result = await autenticarPorEmail(email, senha);
+
+        if (result.user.empresa_cnpj && !NIVEIS_MASTER.includes(result.user.nivel)) {
+            const check = await checkAssinatura(result.user.empresa_cnpj);
+            if (!check.ok) return res.status(403).json({ success: false, error: check.motivo });
+        }
+
+        res.cookie('access_token', result.token, cookieOptions);
+        req.user = result.user;
+        await registrarAuditoria(req, 'LOGIN_EMAIL_SENHA', `Login por e-mail+senha: ${email}`);
+        res.json({ success: true, user: result.user });
+    } catch (error) {
+        if (error.semSenha) {
+            return res.status(403).json({ success: false, semSenha: true, error: 'Você ainda não tem uma senha definida. Use o código por e-mail para seu primeiro acesso.' });
+        }
+        res.status(401).json({ success: false, error: 'E-mail ou senha incorretos.' });
+    }
+});
+
+// POST /api/auth/set-password — define ou redefine a senha (requer JWT válido)
+router.post('/set-password', autenticarToken, async (req, res) => {
+    try {
+        const { senha } = req.body;
+        await definirSenha(req.user.id, senha);
+        await registrarAuditoria(req, 'SENHA_DEFINIDA', `Senha definida/alterada para: ${req.user.email}`);
+        res.json({ success: true, message: 'Senha definida com sucesso.' });
+    } catch (error) {
+        const isValidation = error.message.includes('8 caracteres');
+        res.status(isValidation ? 400 : 500).json({ success: false, error: error.message || 'Falha ao salvar senha.' });
     }
 });
 

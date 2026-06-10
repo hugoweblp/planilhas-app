@@ -64,4 +64,36 @@ async function autenticarUsuario(usuario, senha) {
     };
 }
 
-module.exports = { registrarUsuario, autenticarUsuario };
+async function autenticarPorEmail(email, senha) {
+    const user = await dbGet(
+        'SELECT id, usuario, email, nome, nivel, empresa_cnpj, senha FROM usuarios WHERE email = ?',
+        [email.toLowerCase().trim()]
+    );
+    if (!user) throw new Error('E-mail ou senha incorretos.');
+    if (!user.senha) {
+        const err = new Error('SEM_SENHA');
+        err.semSenha = true;
+        throw err;
+    }
+    const senhaValida = await bcrypt.compare(senha, user.senha);
+    if (!senhaValida) throw new Error('E-mail ou senha incorretos.');
+
+    const token = jwt.sign(
+        { id: user.id, email: user.email, nivel: user.nivel, empresa_cnpj: user.empresa_cnpj, nome: user.nome },
+        appConfig.JWT_SECRET,
+        { expiresIn: '12h' }
+    );
+    return {
+        success: true,
+        token,
+        user: { id: user.id, nome: user.nome, email: user.email, nivel: user.nivel, empresa_cnpj: user.empresa_cnpj }
+    };
+}
+
+async function definirSenha(userId, senha) {
+    if (!senha || senha.length < 8) throw new Error('A senha deve ter pelo menos 8 caracteres.');
+    const hash = await bcrypt.hash(senha, 12);
+    await dbRun('UPDATE usuarios SET senha = ? WHERE id = ?', [hash, userId]);
+}
+
+module.exports = { registrarUsuario, autenticarUsuario, autenticarPorEmail, definirSenha };

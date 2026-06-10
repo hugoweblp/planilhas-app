@@ -223,22 +223,20 @@
             <div id="view-main" class="view">
                 <div class="view-header">
                     <h2>Bem-vindo de volta</h2>
-                    <p>Acesse com sua conta corporativa Google.</p>
+                    <p>Acesse com Google ou e-mail.</p>
                 </div>
 
                 <div id="login-error" class="alert"></div>
 
-                <!-- Google SSO — único CTA -->
                 <div class="gsi-container">
                     <div id="gsi-button-slot-login"></div>
                 </div>
 
-                <!-- Escape para não-Gmail (minúsculo, não chama atenção) -->
-                <p style="text-align:center; margin-top:18px;">
-                    <button id="btn-show-otp" class="text-link" style="font-size:12px; color:var(--text-muted);">
-                        Não usa Gmail? Entrar com código por e-mail
-                    </button>
-                </p>
+                <div class="divider"><span>ou</span></div>
+
+                <button id="btn-show-email-senha" class="btn-secondary">
+                    <i data-lucide="mail"></i> Entrar com e-mail
+                </button>
             </div>
 
             <!-- ══════════════════════════════════════════ -->
@@ -435,6 +433,90 @@
                 </div>
             </div>
 
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: E-MAIL + SENHA                       -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-email-senha" class="view" style="display:none;">
+                <button id="btn-email-senha-back" class="back-link">
+                    <i data-lucide="arrow-left"></i> Voltar
+                </button>
+
+                <div class="view-header">
+                    <h2>Entrar com e-mail</h2>
+                    <p>Use o e-mail e a senha cadastrados na sua conta.</p>
+                </div>
+
+                <div id="email-senha-error" class="alert"></div>
+
+                <form id="email-senha-form">
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="mail"></i>
+                            <input type="email" id="es-email" placeholder="nome@hotmail.com" required autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="es-senha" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-es-submit">
+                        <span>Entrar</span>
+                        <i data-lucide="arrow-right" class="arrow-icon-es"></i>
+                        <i data-lucide="loader" class="spinner spinner-es"></i>
+                    </button>
+                </form>
+
+                <p style="text-align:center; margin-top:16px;">
+                    <button id="btn-esqueceu-senha" class="text-link" style="font-size:12px; color:var(--text-muted);">
+                        <i data-lucide="key"></i> Não tenho senha / Esqueceu a senha?
+                    </button>
+                </p>
+            </div>
+
+            <!-- ══════════════════════════════════════════ -->
+            <!-- VIEW: DEFINIR / REDEFINIR SENHA            -->
+            <!-- ══════════════════════════════════════════ -->
+            <div id="view-set-password" class="view" style="display:none;">
+                <div class="view-header">
+                    <h2 id="set-pwd-title">Definir sua senha</h2>
+                    <p id="set-pwd-subtitle">Crie uma senha para acessar sem código na próxima vez.</p>
+                </div>
+
+                <div id="set-pwd-error" class="alert"></div>
+
+                <form id="set-password-form">
+                    <div class="form-group">
+                        <label>Nova senha</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="sp-senha" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar senha</label>
+                        <div class="input-wrapper">
+                            <i data-lucide="lock"></i>
+                            <input type="password" id="sp-confirma" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-sp-submit">
+                        <span>Salvar e entrar</span>
+                        <i data-lucide="check-circle" class="arrow-icon-sp"></i>
+                        <i data-lucide="loader" class="spinner spinner-sp"></i>
+                    </button>
+                </form>
+
+                <p style="text-align:center; margin-top:16px;">
+                    <button id="btn-skip-password" class="text-link" style="font-size:12px; color:var(--text-muted);">
+                        Pular por agora
+                    </button>
+                </p>
+            </div>
+
             <div class="login-footer">
                 &copy; 2026 Kitfy Automação Premium.
                 <span style="margin: 0 6px; opacity:0.3;">·</span>
@@ -449,7 +531,9 @@
 
         const API_URL = '/api';
         let currentView = 'main';
-        let pendingGoogleCredential = null; // armazena o credential quando o operador é novo
+        let pendingGoogleCredential = null;
+        let isForgotPassword = false;
+        let otpReturnView = 'main';
 
         // ── Navegação entre views ──────────────────────────────
         function showView(name) {
@@ -653,6 +737,17 @@
                 const res = await axios.post(`${API_URL}/auth/verify-code`, { email, cnpj, code });
                 if (res.data.success) {
                     localStorage.setItem('user', JSON.stringify(res.data.user));
+                    if (res.data.needsPassword || isForgotPassword) {
+                        isForgotPassword = false;
+                        document.getElementById('set-pwd-title').innerText = res.data.needsPassword ? 'Definir sua senha' : 'Redefinir sua senha';
+                        document.getElementById('set-pwd-subtitle').innerText = res.data.needsPassword
+                            ? 'Crie uma senha para acessar sem código na próxima vez.'
+                            : 'Escolha uma nova senha para sua conta.';
+                        document.getElementById('sp-senha').value = '';
+                        document.getElementById('sp-confirma').value = '';
+                        showView('set-password');
+                        return;
+                    }
                     redirect(res.data.user);
                 }
             } catch (error) {
@@ -802,8 +897,13 @@
             }
         }
 
-        document.getElementById('btn-show-otp').addEventListener('click', () => showView('otp'));
-        document.getElementById('btn-otp-back').addEventListener('click', () => showView('main'));
+        // ── Navegação principal ────────────────────────────────
+        document.getElementById('btn-show-email-senha').addEventListener('click', () => showView('email-senha'));
+        document.getElementById('btn-email-senha-back').addEventListener('click', () => showView('main'));
+        document.getElementById('btn-otp-back').addEventListener('click', () => {
+            isForgotPassword = false;
+            showView(otpReturnView);
+        });
         document.getElementById('btn-admin-back').addEventListener('click', () => showView('main'));
         document.getElementById('btn-2fa-back').addEventListener('click', () => { twoFATempToken = null; showView('admin'); });
         document.getElementById('btn-cadastro-back').addEventListener('click', () => { showView('main'); pendingGoogleCredential = null; });
@@ -811,6 +911,96 @@
         btnFooterAdmin.addEventListener('click', () => showView('admin'));
         btnFooterAdmin.addEventListener('mouseenter', () => { btnFooterAdmin.style.opacity = '1'; });
         btnFooterAdmin.addEventListener('mouseleave', () => { btnFooterAdmin.style.opacity = '0.5'; });
+
+        // Esqueceu a senha → OTP (modo redefinição)
+        document.getElementById('btn-esqueceu-senha').addEventListener('click', () => {
+            isForgotPassword = true;
+            otpReturnView = 'email-senha';
+            const emailDigitado = document.getElementById('es-email').value;
+            if (emailDigitado) document.getElementById('otp-email').value = emailDigitado;
+            // Garante que OTP começa no passo 1
+            document.getElementById('otp-step-1').style.display = 'block';
+            document.getElementById('otp-step-2').style.display = 'none';
+            document.getElementById('otp-code').value = '';
+            showView('otp');
+        });
+
+        // Pular definição de senha → redireciona direto
+        document.getElementById('btn-skip-password').addEventListener('click', () => {
+            const u = JSON.parse(localStorage.getItem('user') || 'null');
+            if (u) redirect(u);
+        });
+
+        // ── Login por e-mail + senha ───────────────────────────
+        document.getElementById('email-senha-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('es-email').value.trim();
+            const senha = document.getElementById('es-senha').value;
+            const btn = document.getElementById('btn-es-submit');
+            const err = document.getElementById('email-senha-error');
+
+            err.style.display = 'none';
+            btn.disabled = true;
+            btn.querySelector('.spinner-es').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-es').style.display = 'none';
+
+            try {
+                const res = await axios.post(`${API_URL}/auth/login-email`, { email, senha });
+                if (res.data.success) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                    redirect(res.data.user);
+                }
+            } catch (error) {
+                const data = error.response?.data;
+                if (data?.semSenha) {
+                    // Usuário existe mas não tem senha — guia para OTP
+                    err.style.display = 'block';
+                    err.innerText = 'Você ainda não tem uma senha. Use o botão abaixo para receber um código e definir uma.';
+                    document.getElementById('btn-esqueceu-senha').style.display = 'inline-flex';
+                } else {
+                    err.style.display = 'block';
+                    err.innerText = data?.error || 'E-mail ou senha incorretos.';
+                }
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-es').style.display = 'none';
+                btn.querySelector('.arrow-icon-es').style.display = 'inline-block';
+            }
+        });
+
+        // ── Definir/redefinir senha ────────────────────────────
+        document.getElementById('set-password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('sp-senha').value;
+            const confirma = document.getElementById('sp-confirma').value;
+            const btn = document.getElementById('btn-sp-submit');
+            const err = document.getElementById('set-pwd-error');
+
+            err.style.display = 'none';
+
+            if (senha !== confirma) {
+                err.style.display = 'block';
+                err.innerText = 'As senhas não coincidem.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.querySelector('.spinner-sp').style.display = 'inline-block';
+            btn.querySelector('.arrow-icon-sp').style.display = 'none';
+
+            try {
+                await axios.post(`${API_URL}/auth/set-password`, { senha });
+                const u = JSON.parse(localStorage.getItem('user') || 'null');
+                if (u) redirect(u);
+            } catch (error) {
+                err.style.display = 'block';
+                err.innerText = error.response?.data?.error || 'Falha ao salvar a senha. Tente novamente.';
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner-sp').style.display = 'none';
+                btn.querySelector('.arrow-icon-sp').style.display = 'inline-block';
+            }
+        });
     </script>
 </body>
 </html>
