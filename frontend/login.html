@@ -510,11 +510,6 @@
                     </button>
                 </form>
 
-                <p style="text-align:center; margin-top:16px;">
-                    <button id="btn-skip-password" class="text-link" style="font-size:12px; color:var(--text-muted);">
-                        Pular por agora
-                    </button>
-                </p>
             </div>
 
             <div class="login-footer">
@@ -923,12 +918,6 @@
             document.getElementById('otp-step-2').style.display = 'none';
             document.getElementById('otp-code').value = '';
             showView('otp');
-        });
-
-        // Pular definição de senha → redireciona direto
-        document.getElementById('btn-skip-password').addEventListener('click', () => {
-            const u = JSON.parse(localStorage.getItem('user') || 'null');
-            if (u) redirect(u);
         });
 
         // ── Login por e-mail + senha ───────────────────────────

@@ -27,4 +27,14 @@ const twoFALimiter = rateLimit({
     message: { success: false, error: 'Muitas tentativas de verificação 2FA. Aguarde 15 minutos.' }
 });
 
-module.exports = { apiLimiter, authLimiter, twoFALimiter };
+// Acesso root via master key — janela de 1 hora, máx 5 falhas por IP (sucessos não contam)
+const masterKeyLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: 'Acesso bloqueado. Tente novamente em 1 hora.' }
+});
+
+module.exports = { apiLimiter, authLimiter, twoFALimiter, masterKeyLimiter };

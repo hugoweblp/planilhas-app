@@ -87,7 +87,7 @@
             status.textContent = '> VERIFYING_ENCRYPTION...';
 
             try {
-                const res  = await fetch('/api/internal/verify-master-key', {
+                const res  = await fetch('/api/internal/auth', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify({ key })

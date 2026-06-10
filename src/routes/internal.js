@@ -7,13 +7,13 @@ const router = express.Router();
 
 const { dbGet, dbRun } = require('../database/db');
 const { autenticarToken, autenticarMaster } = require('../middleware/auth');
-const { authLimiter } = require('../middleware/limiters');
+const { masterKeyLimiter } = require('../middleware/limiters');
 const appConfig = require('../config/app');
 const { ADMIN_EMAIL, cookieOptions } = appConfig;
 const { ROOT_DIR, registrarAuditoria } = require('../utils/helpers');
 
-// POST /api/internal/verify-master-key
-router.post('/verify-master-key', authLimiter, async (req, res) => {
+// POST /api/internal/auth
+router.post('/auth', masterKeyLimiter, async (req, res) => {
     try {
         const { key } = req.body;
         const masterKey = process.env.MASTER_KEY;
